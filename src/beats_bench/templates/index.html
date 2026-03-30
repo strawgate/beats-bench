@@ -15,8 +15,6 @@
       <div class="header-links">
         <a href="https://github.com/strawgate/beats-bench">Repository</a>
         <a href="https://github.com/strawgate/beats-bench/actions/workflows/bench.yml">Run Benchmark</a>
-        <a href="dev/bench/throughput/">Throughput Charts (auto)</a>
-        <a href="dev/bench/efficiency/">Efficiency Charts (auto)</a>
       </div>
     </div>
 
@@ -24,28 +22,29 @@
     <div id="error" class="error" style="display:none"></div>
     <div id="content" style="display:none">
 
-      <!-- Latest comparison table -->
-      <div class="card" id="latest-section">
-        <h2>Latest Run</h2>
-        <div id="latest-meta" style="margin-bottom:12px; font-size:13px; color:var(--text-muted)"></div>
+      <!-- Nightly section -->
+      <div class="card" id="nightly-section" style="display:none">
+        <h2>Nightly Benchmarks</h2>
+        <div class="tracking-cards" id="nightly-cards"></div>
+      </div>
+
+      <!-- PR benchmarks table -->
+      <div class="card" id="pr-section">
+        <h2>PR Benchmarks</h2>
         <table>
           <thead>
             <tr>
-              <th>Scenario</th>
-              <th>CPU</th>
-              <th class="num">Base EPS</th>
-              <th class="num">PR EPS</th>
-              <th class="num">Delta</th>
+              <th>PR</th>
+              <th>Title</th>
+              <th>Author</th>
+              <th>State</th>
+              <th class="num">Best Delta</th>
+              <th>Runs</th>
+              <th></th>
             </tr>
           </thead>
-          <tbody id="latest-table-body"></tbody>
+          <tbody id="pr-table-body"></tbody>
         </table>
-      </div>
-
-      <!-- Trend charts -->
-      <div class="card">
-        <h2>EPS Trends Across Runs</h2>
-        <div id="trend-charts" class="chart-grid"></div>
       </div>
 
       <!-- All runs list -->
@@ -57,13 +56,11 @@
     </div>
   </div>
 
+  <script id="page-data" type="application/json">__PAGE_DATA__</script>
   <script>
     const BASE_COLOR = 'rgb(37, 99, 235)';
-    const BASE_COLOR_BG = 'rgba(37, 99, 235, 0.2)';
     const PR_COLOR = 'rgb(22, 163, 74)';
-    const PR_COLOR_BG = 'rgba(22, 163, 74, 0.2)';
 
-    // Detect dark mode for Chart.js
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
     const textColor = isDark ? '#8b949e' : '#656d76';
@@ -71,11 +68,9 @@
     Chart.defaults.color = textColor;
     Chart.defaults.borderColor = gridColor;
 
-    async function fetchJSON(url) {
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error(`Failed to load ${url}: ${resp.status}`);
-      return resp.json();
-    }
+    const pageData = JSON.parse(document.getElementById('page-data').textContent);
+    const allRuns = pageData.runs || [];
+    const prMetadata = pageData.pr_metadata || {};
 
     function formatDate(dateStr) {
       const d = new Date(dateStr);
@@ -83,12 +78,16 @@
     }
 
     function shortRef(ref) {
-      if (ref.length > 20) return ref.substring(0, 20) + '...';
-      return ref;
+      if (ref && ref.length > 20) return ref.substring(0, 20) + '...';
+      return ref || '';
     }
 
-    function formatEPS(val) {
-      return val.toLocaleString();
+    function stateClass(state) {
+      if (!state) return 'pr-open';
+      const s = state.toUpperCase();
+      if (s === 'MERGED') return 'pr-merged';
+      if (s === 'CLOSED') return 'pr-closed';
+      return 'pr-open';
     }
 
     function deltaClass(delta) {
@@ -97,214 +96,163 @@
       return 'delta-neutral';
     }
 
-    async function init() {
+    function init() {
       const loadingEl = document.getElementById('loading');
       const errorEl = document.getElementById('error');
       const contentEl = document.getElementById('content');
 
-      try {
-        const index = await fetchJSON('data/index.json');
-        const runs = index.runs || [];
-
-        if (runs.length === 0) {
-          loadingEl.style.display = 'none';
-          errorEl.textContent = 'No benchmark runs yet. Trigger a benchmark from GitHub Actions.';
-          errorEl.style.display = 'block';
-          return;
-        }
-
-        // Load all run data (for trends)
-        const runDataMap = {};
-        const loadPromises = runs.map(async (run) => {
-          try {
-            const raw = await fetchJSON(`data/runs/${run.id}.json`);
-            runDataMap[run.id] = raw.run_data || raw;
-          } catch (e) {
-            console.warn(`Failed to load run ${run.id}:`, e);
-          }
-        });
-        await Promise.all(loadPromises);
-
-        // Render latest comparison table
-        const latest = runs[0];
-        const latestData = runDataMap[latest.id];
-        renderLatest(latest, latestData);
-
-        // Render trend charts
-        renderTrends(runs, runDataMap);
-
-        // Render runs list
-        renderRunsList(runs);
-
+      if (allRuns.length === 0) {
         loadingEl.style.display = 'none';
-        contentEl.style.display = 'block';
-      } catch (e) {
-        loadingEl.style.display = 'none';
-        errorEl.textContent = 'Failed to load dashboard data: ' + e.message;
+        errorEl.textContent = 'No benchmark runs yet. Trigger a benchmark from GitHub Actions.';
         errorEl.style.display = 'block';
+        return;
+      }
+
+      renderNightly();
+      renderPRTable();
+      renderRunsList();
+
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+    }
+
+    function renderNightly() {
+      const nightlyRuns = allRuns.filter(r => (r.type || 'pr') === 'nightly');
+      if (nightlyRuns.length === 0) return;
+
+      const section = document.getElementById('nightly-section');
+      section.style.display = 'block';
+      const container = document.getElementById('nightly-cards');
+
+      // Group by scenario+cpu, collect EPS trend
+      const combos = new Map();
+      for (const run of nightlyRuns) {
+        const summary = run.summary || {};
+        for (const [scenario, cpuData] of Object.entries(summary)) {
+          for (const [cpu, stats] of Object.entries(cpuData)) {
+            const key = `${scenario} (${cpu} CPU)`;
+            if (!combos.has(key)) combos.set(key, []);
+            combos.get(key).push({ date: run.date, pr_avg: stats.pr_avg, base_avg: stats.base_avg });
+          }
+        }
+      }
+
+      for (const [label, points] of combos) {
+        // Sort oldest first for sparkline
+        points.sort((a, b) => a.date.localeCompare(b.date));
+        const latest = points[points.length - 1];
+
+        const card = document.createElement('div');
+        card.className = 'tracking-card';
+        card.innerHTML = `
+          <div class="tracking-card-label">${label}</div>
+          <div class="tracking-card-value">${latest.pr_avg ? latest.pr_avg.toLocaleString() : 'N/A'} EPS</div>
+          <div class="sparkline-container"><canvas></canvas></div>
+        `;
+        container.appendChild(card);
+
+        const canvas = card.querySelector('canvas');
+        new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: points.map(p => ''),
+            datasets: [{
+              data: points.map(p => p.pr_avg || p.base_avg || 0),
+              borderColor: PR_COLOR,
+              borderWidth: 1.5,
+              pointRadius: 0,
+              tension: 0.3,
+              fill: false,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+              x: { display: false },
+              y: { display: false },
+            },
+          },
+        });
       }
     }
 
-    function renderLatest(run, data) {
-      const metaEl = document.getElementById('latest-meta');
-      metaEl.innerHTML = `
-        <span class="badge badge-base">base: ${run.base_ref}</span>
-        <span class="badge badge-pr">PR: ${shortRef(run.pr_ref)}</span>
-        &mdash; ${formatDate(run.date)}
-        &mdash; <a href="run.html?id=${run.id}" style="color:var(--accent)">View details</a>
-      `;
+    function renderPRTable() {
+      const prRuns = allRuns.filter(r => (r.type || 'pr') === 'pr' && r.pr_number);
 
-      const tbody = document.getElementById('latest-table-body');
-      if (!data || !data.scenarios) {
-        tbody.innerHTML = '<tr><td colspan="5">No data available</td></tr>';
+      // Group by pr_number
+      const grouped = new Map();
+      for (const run of prRuns) {
+        const pn = run.pr_number;
+        if (!grouped.has(pn)) grouped.set(pn, []);
+        grouped.get(pn).push(run);
+      }
+
+      const tbody = document.getElementById('pr-table-body');
+      if (grouped.size === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text-muted)">No PR benchmarks yet.</td></tr>';
         return;
       }
 
       let html = '';
-      for (const [scenario, cpuData] of Object.entries(data.scenarios)) {
-        for (const [cpu, metrics] of Object.entries(cpuData)) {
-          const baseAvg = metrics.base_eps.length > 0
-            ? Math.round(metrics.base_eps.reduce((a, b) => a + b, 0) / metrics.base_eps.length)
-            : 0;
-          const prAvg = metrics.pr_eps.length > 0
-            ? Math.round(metrics.pr_eps.reduce((a, b) => a + b, 0) / metrics.pr_eps.length)
-            : 0;
-          const delta = baseAvg > 0 ? ((prAvg - baseAvg) / baseAvg * 100) : 0;
-          const sign = delta >= 0 ? '+' : '';
+      for (const [pn, runs] of grouped) {
+        const meta = prMetadata[pn] || {};
+        const title = meta.title || `PR #${pn}`;
+        const author = meta.author ? (meta.author.login || meta.author) : '';
+        const state = meta.state || '';
 
-          html += `<tr>
-            <td>${scenario}</td>
-            <td>${cpu}</td>
-            <td class="num">${formatEPS(baseAvg)}</td>
-            <td class="num">${formatEPS(prAvg)}</td>
-            <td class="num ${deltaClass(delta)}">${sign}${delta.toFixed(1)}%</td>
-          </tr>`;
+        // Find best delta
+        let bestDelta = null;
+        for (const run of runs) {
+          const summary = run.summary || {};
+          for (const cpuData of Object.values(summary)) {
+            for (const stats of Object.values(cpuData)) {
+              const d = stats.delta_pct;
+              if (bestDelta === null || Math.abs(d) > Math.abs(bestDelta)) {
+                bestDelta = d;
+              }
+            }
+          }
         }
+
+        const deltaStr = bestDelta !== null
+          ? `${bestDelta >= 0 ? '+' : ''}${bestDelta.toFixed(1)}%`
+          : 'N/A';
+        const dCls = bestDelta !== null ? deltaClass(bestDelta) : '';
+
+        html += `<tr>
+          <td><a href="pr/${pn}/index.html" style="color:var(--accent)">#${pn}</a></td>
+          <td>${title}</td>
+          <td>${typeof author === 'object' ? author.login : author}</td>
+          <td>${state ? `<span class="pr-state-badge ${stateClass(state)}">${state}</span>` : ''}</td>
+          <td class="num ${dCls}">${deltaStr}</td>
+          <td>${runs.length}</td>
+          <td><a href="pr/${pn}/index.html" style="color:var(--accent)">Details</a></td>
+        </tr>`;
       }
       tbody.innerHTML = html;
     }
 
-    function renderTrends(runs, runDataMap) {
-      const container = document.getElementById('trend-charts');
-
-      // Collect all scenario+cpu combos
-      const combos = new Map();
-      for (const run of runs) {
-        const data = runDataMap[run.id];
-        if (!data || !data.scenarios) continue;
-        for (const [scenario, cpuData] of Object.entries(data.scenarios)) {
-          for (const cpu of Object.keys(cpuData)) {
-            const key = `${scenario} (${cpu} CPU)`;
-            if (!combos.has(key)) combos.set(key, { scenario, cpu });
-          }
-        }
-      }
-
-      if (combos.size === 0) {
-        container.innerHTML = '<p style="color:var(--text-muted)">No trend data available yet.</p>';
-        return;
-      }
-
-      for (const [label, { scenario, cpu }] of combos) {
-        const div = document.createElement('div');
-        div.className = 'chart-container';
-        div.innerHTML = `<h3>${label}</h3><canvas></canvas>`;
-        container.appendChild(div);
-        const canvas = div.querySelector('canvas');
-
-        // Build data points (oldest first)
-        const labels = [];
-        const baseData = [];
-        const prData = [];
-
-        const sortedRuns = [...runs].reverse();
-        for (const run of sortedRuns) {
-          const data = runDataMap[run.id];
-          if (!data || !data.scenarios || !data.scenarios[scenario] || !data.scenarios[scenario][cpu]) continue;
-          const m = data.scenarios[scenario][cpu];
-          const baseAvg = m.base_eps.length > 0
-            ? Math.round(m.base_eps.reduce((a, b) => a + b, 0) / m.base_eps.length)
-            : null;
-          const prAvg = m.pr_eps.length > 0
-            ? Math.round(m.pr_eps.reduce((a, b) => a + b, 0) / m.pr_eps.length)
-            : null;
-
-          const d = new Date(run.date);
-          const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          labels.push(dateLabel + '\n' + shortRef(run.pr_ref));
-          baseData.push(baseAvg);
-          prData.push(prAvg);
-        }
-
-        new Chart(canvas, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [
-              {
-                label: 'Base EPS',
-                data: baseData,
-                borderColor: BASE_COLOR,
-                backgroundColor: BASE_COLOR_BG,
-                borderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                tension: 0.1,
-                fill: false,
-              },
-              {
-                label: 'PR EPS',
-                data: prData,
-                borderColor: PR_COLOR,
-                backgroundColor: PR_COLOR_BG,
-                borderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                tension: 0.1,
-                fill: false,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            interaction: { intersect: false, mode: 'index' },
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y != null ? ctx.parsed.y.toLocaleString() : 'N/A'} events/sec`,
-                },
-              },
-              legend: { position: 'top' },
-            },
-            scales: {
-              y: {
-                title: { display: true, text: 'Events/sec' },
-                beginAtZero: false,
-                grid: { color: gridColor },
-              },
-              x: {
-                grid: { display: false },
-                ticks: { maxRotation: 45, font: { size: 11 } },
-              },
-            },
-          },
-        });
-      }
-    }
-
-    function renderRunsList(runs) {
+    function renderRunsList() {
       const container = document.getElementById('runs-list');
       let html = '';
-      for (const run of runs) {
+      for (const run of allRuns) {
+        const runUrl = `run/${run.id}/index.html`;
+        const prLabel = run.pr_number ? ` &mdash; PR #${run.pr_number}` : '';
+        const typeLabel = (run.type || 'pr') === 'nightly'
+          ? '<span class="scenario-tag">nightly</span>'
+          : '';
+
         html += `
-          <a class="run-item" href="run.html?id=${run.id}">
+          <a class="run-item" href="${runUrl}">
             <div class="run-meta">
               <div class="refs">
                 <span class="badge badge-base">base: ${run.base_ref}</span>
                 <span class="badge badge-pr">PR: ${shortRef(run.pr_ref)}</span>
+                ${typeLabel}
               </div>
-              <div class="date">${formatDate(run.date)} &mdash; Run #${run.id}</div>
+              <div class="date">${formatDate(run.date)} &mdash; Run #${run.id}${prLabel}</div>
             </div>
             <div class="run-scenarios">
               ${(run.scenarios || []).map(s => `<span class="scenario-tag">${s}</span>`).join('')}

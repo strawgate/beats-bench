@@ -119,3 +119,9 @@ def sample_results_dir(tmp_path):
     (scenario_dir / "runs.jsonl").write_text("\n".join(lines) + "\n")
 
     return tmp_path
+
+
+@pytest.fixture
+def sample_results_dir_with_pr(sample_results_dir):
+    """Return sample_results_dir — caller should pass pr_number/type via args."""
+    return sample_results_dir

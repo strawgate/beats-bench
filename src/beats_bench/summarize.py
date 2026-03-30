@@ -26,6 +26,10 @@ class SummarizeArgs:
     existing_data: str = ""
     output_dir: str = ""
     run_id: str = ""
+    pr_number: str = ""
+    run_type: str = "pr"
+    commit_sha: str = ""
+    pr_repo_owner: str = ""
 
 
 def load_results(results_dir: str) -> list[dict]:
@@ -77,6 +81,60 @@ def load_results(results_dir: str) -> list[dict]:
             results.append(data)
 
     return results
+
+
+def _compute_summary(scenarios: dict) -> dict:
+    """Compute summary stats (base_avg, pr_avg, delta_pct) for each scenario/cpu pair."""
+    summary: dict = {}
+    for scenario, cpu_data in scenarios.items():
+        summary[scenario] = {}
+        for cpu, metrics in cpu_data.items():
+            base_vals = metrics.get("base_eps", [])
+            pr_vals = metrics.get("pr_eps", [])
+            base_avg = sum(base_vals) // len(base_vals) if base_vals else 0
+            pr_avg = sum(pr_vals) // len(pr_vals) if pr_vals else 0
+            delta_pct = ((pr_avg - base_avg) * 100 / base_avg) if base_avg > 0 else 0.0
+            summary[scenario][cpu] = {
+                "base_avg": base_avg,
+                "pr_avg": pr_avg,
+                "delta_pct": round(delta_pct, 1),
+            }
+    return summary
+
+
+def fetch_pr_metadata(pr_numbers: list[int], repo: str) -> dict[int, dict]:
+    """Call ``gh pr view`` for each PR number and return parsed metadata.
+
+    Returns a dict keyed by PR number.  On any failure the entry is an empty
+    dict so callers can continue gracefully.
+    """
+    result: dict[int, dict] = {}
+    for num in pr_numbers:
+        try:
+            proc = subprocess.run(
+                [
+                    "gh",
+                    "pr",
+                    "view",
+                    str(num),
+                    "--repo",
+                    repo,
+                    "--json",
+                    "title,author,state,url,number",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+            if proc.returncode == 0:
+                data = json.loads(proc.stdout)
+                result[num] = data
+            else:
+                result[num] = {}
+        except (subprocess.SubprocessError, OSError, json.JSONDecodeError):
+            result[num] = {}
+    return result
 
 
 def generate_summary(results: list[dict], args: SummarizeArgs) -> tuple[str, list[dict]]:
@@ -229,6 +287,8 @@ def generate_dashboard_data(results: list[dict], args: SummarizeArgs, run_id: st
             "pr_runs": pr_runs_raw,
         }
 
+    summary = _compute_summary(scenarios)
+
     run_data = {
         "id": run_id,
         "date": date,
@@ -236,6 +296,10 @@ def generate_dashboard_data(results: list[dict], args: SummarizeArgs, run_id: st
         "pr_ref": args.pr_ref,
         "base_repo": args.base_repo,
         "pr_repo": args.pr_repo,
+        "type": args.run_type,
+        "pr_number": args.pr_number,
+        "commit_sha": args.commit_sha,
+        "summary": summary,
         "scenarios": scenarios,
     }
 
@@ -246,6 +310,10 @@ def generate_dashboard_data(results: list[dict], args: SummarizeArgs, run_id: st
         "pr_ref": args.pr_ref,
         "base_repo": args.base_repo,
         "pr_repo": args.pr_repo,
+        "type": args.run_type,
+        "pr_number": args.pr_number,
+        "commit_sha": args.commit_sha,
+        "summary": summary,
         "scenarios": scenario_names,
         "cpus": sorted(cpu_set),
     }
@@ -299,18 +367,17 @@ def generate_pprof_diffs(results_dir: str) -> list[str]:
 def build_site(output_dir: str, existing_data: str, dashboard: dict) -> None:
     """Build the full static site in output_dir.
 
-    Copies HTML templates, merges existing data with the new run, and writes
-    all data files to output_dir.
+    Generates:
+      - index.html (overview)
+      - pr/{N}/index.html for each PR
+      - run/{id}/index.html for each run
+      - style.css
+      - data/index.json + data/runs/{id}.json
     """
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    # Copy HTML/CSS templates from the package templates directory
     templates_dir = Path(__file__).parent / "templates"
-    for name in ("index.html", "run.html", "style.css"):
-        src = templates_dir / name
-        if src.exists():
-            shutil.copy2(src, out / name)
 
     # Load existing index and runs
     existing_path = Path(existing_data) if existing_data else Path()
@@ -321,7 +388,6 @@ def build_site(output_dir: str, existing_data: str, dashboard: dict) -> None:
         idx_file = existing_path / "index.json"
         if idx_file.exists():
             existing_index = json.loads(idx_file.read_text())
-        # Load existing run JSONs
         runs_dir = existing_path / "runs"
         if runs_dir.exists():
             for f in runs_dir.iterdir():
@@ -336,10 +402,8 @@ def build_site(output_dir: str, existing_data: str, dashboard: dict) -> None:
     # Remove any existing entry with same id (re-run case)
     existing_index["runs"] = [r for r in existing_index["runs"] if r["id"] != run_id]
     existing_index["runs"].append(new_entry)
-    # Sort by date descending
     existing_index["runs"].sort(key=lambda r: r["date"], reverse=True)
 
-    # Store new run data (wrapped in run_data key for compatibility)
     existing_runs[run_id] = {"run_data": new_run_data}
 
     # Write data directory
@@ -348,9 +412,92 @@ def build_site(output_dir: str, existing_data: str, dashboard: dict) -> None:
     runs_out.mkdir(parents=True, exist_ok=True)
 
     (data_dir / "index.json").write_text(json.dumps(existing_index, indent=2))
-
     for rid, rdata in existing_runs.items():
         (runs_out / f"{rid}.json").write_text(json.dumps(rdata, indent=2))
+
+    # Copy style.css to root
+    css_src = templates_dir / "style.css"
+    if css_src.exists():
+        shutil.copy2(css_src, out / "style.css")
+
+    # Collect unique PR numbers from the full index
+    pr_numbers: set[str] = set()
+    for entry in existing_index["runs"]:
+        pn = entry.get("pr_number", "")
+        if pn:
+            pr_numbers.add(pn)
+
+    # Determine the repo for PR metadata (use the first non-empty pr_repo_owner or base_repo)
+    pr_meta_repo = ""
+    for entry in existing_index["runs"]:
+        pr_meta_repo = entry.get("base_repo", "")
+        if pr_meta_repo:
+            break
+
+    # Fetch PR metadata (best effort)
+    pr_metadata: dict[int, dict] = {}
+    if pr_numbers and pr_meta_repo:
+        int_pr_nums = []
+        for pn in pr_numbers:
+            try:
+                int_pr_nums.append(int(pn))
+            except (ValueError, TypeError):
+                continue
+        if int_pr_nums:
+            pr_metadata = fetch_pr_metadata(int_pr_nums, pr_meta_repo)
+
+    # --- Generate index.html ---
+    index_page_data = {
+        "runs": existing_index["runs"],
+        "pr_metadata": {str(k): v for k, v in pr_metadata.items()},
+    }
+    _write_template_page(
+        templates_dir / "index.html",
+        out / "index.html",
+        index_page_data,
+    )
+
+    # --- Generate pr/{N}/index.html ---
+    pr_template = templates_dir / "pr.html"
+    for pn in pr_numbers:
+        pr_runs = [r for r in existing_index["runs"] if r.get("pr_number") == pn]
+        pr_meta = pr_metadata.get(int(pn), {}) if pn.isdigit() else {}
+        pr_page_data = {
+            "pr_number": pn,
+            "pr_metadata": pr_meta,
+            "runs": pr_runs,
+        }
+        pr_dir = out / "pr" / pn
+        pr_dir.mkdir(parents=True, exist_ok=True)
+        _write_template_page(pr_template, pr_dir / "index.html", pr_page_data)
+
+    # --- Generate run/{id}/index.html ---
+    run_template = templates_dir / "run.html"
+    for rid in existing_runs:
+        run_dir = out / "run" / rid
+        run_dir.mkdir(parents=True, exist_ok=True)
+        # Find the index entry for this run (for breadcrumb context)
+        run_index_entry = next(
+            (r for r in existing_index["runs"] if r["id"] == rid),
+            {},
+        )
+        run_page_data = {
+            "run_id": rid,
+            "pr_number": run_index_entry.get("pr_number", ""),
+            "run_type": run_index_entry.get("type", "pr"),
+        }
+        _write_template_page(run_template, run_dir / "index.html", run_page_data)
+
+
+def _write_template_page(template_path: Path, dest_path: Path, page_data: dict) -> None:
+    """Read a template, replace __PAGE_DATA__ with JSON, and write to dest."""
+    if not template_path.exists():
+        return
+    html = template_path.read_text()
+    data_json = json.dumps(page_data)
+    html = html.replace("__PAGE_DATA__", data_json)
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    dest_path.write_text(html)
 
 
 def summarize(args: SummarizeArgs) -> tuple[str, list[dict]]:

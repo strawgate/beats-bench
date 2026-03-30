@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from beats_bench.summarize import (
     SummarizeArgs,
+    _compute_summary,
     build_site,
     generate_dashboard_data,
     generate_summary,
@@ -13,16 +15,22 @@ from beats_bench.summarize import (
 )
 
 
-def _make_args() -> SummarizeArgs:
-    return SummarizeArgs(
-        results_dir="unused",
-        base_ref="main",
-        pr_ref="feature-branch",
-        base_repo="elastic/beats",
-        pr_repo="elastic/beats",
-        runs_per_scenario=3,
-        measure_seconds=20,
-    )
+def _make_args(**overrides) -> SummarizeArgs:
+    defaults = {
+        "results_dir": "unused",
+        "base_ref": "main",
+        "pr_ref": "feature-branch",
+        "base_repo": "elastic/beats",
+        "pr_repo": "elastic/beats",
+        "runs_per_scenario": 3,
+        "measure_seconds": 20,
+        "pr_number": "",
+        "run_type": "pr",
+        "commit_sha": "",
+        "pr_repo_owner": "",
+    }
+    defaults.update(overrides)
+    return SummarizeArgs(**defaults)
 
 
 class TestLoadResults:
@@ -41,6 +49,28 @@ class TestLoadResults:
     def test_load_nonexistent_dir(self):
         results = load_results("/nonexistent/path")
         assert results == []
+
+
+class TestComputeSummary:
+    def test_compute_summary(self):
+        scenarios = {
+            "passthrough": {
+                "1.0": {
+                    "base_eps": [7000, 7200, 6800],
+                    "pr_eps": [7500, 7600, 7400],
+                },
+            },
+        }
+        summary = _compute_summary(scenarios)
+        assert "passthrough" in summary
+        assert "1.0" in summary["passthrough"]
+        s = summary["passthrough"]["1.0"]
+        assert s["base_avg"] == 7000
+        assert s["pr_avg"] == 7500
+        assert s["delta_pct"] == 7.1
+
+    def test_compute_summary_empty(self):
+        assert _compute_summary({}) == {}
 
 
 class TestGenerateSummary:
@@ -95,14 +125,13 @@ class TestBuildSite:
         output_dir = str(tmp_path / "_site")
         build_site(output_dir, "", dashboard)
 
-        from pathlib import Path
-
         site = Path(output_dir)
         assert (site / "index.html").exists()
-        assert (site / "run.html").exists()
         assert (site / "style.css").exists()
         assert (site / "data" / "index.json").exists()
         assert (site / "data" / "runs" / "12345.json").exists()
+        # Run page at run/{id}/index.html
+        assert (site / "run" / "12345" / "index.html").exists()
 
         # Verify index.json structure
         idx = json.loads((site / "data" / "index.json").read_text())
@@ -140,8 +169,6 @@ class TestBuildSite:
         output_dir = str(tmp_path / "_site")
         build_site(output_dir, str(existing), dashboard)
 
-        from pathlib import Path
-
         site = Path(output_dir)
         idx = json.loads((site / "data" / "index.json").read_text())
         # Should have both old and new runs
@@ -163,3 +190,85 @@ class TestBuildSite:
         json.dumps(dashboard)
         assert "run_data" in dashboard
         assert "index_entry" in dashboard
+
+    def test_dashboard_includes_type_and_pr_number(self, sample_results_dir):
+        results = load_results(str(sample_results_dir))
+        args = _make_args(pr_number="42", run_type="pr", commit_sha="abc123")
+        dashboard = generate_dashboard_data(results, args, "12345")
+
+        assert dashboard["run_data"]["type"] == "pr"
+        assert dashboard["run_data"]["pr_number"] == "42"
+        assert dashboard["run_data"]["commit_sha"] == "abc123"
+        assert dashboard["index_entry"]["type"] == "pr"
+        assert dashboard["index_entry"]["pr_number"] == "42"
+
+    def test_dashboard_includes_summary(self, sample_results_dir):
+        results = load_results(str(sample_results_dir))
+        args = _make_args()
+        dashboard = generate_dashboard_data(results, args, "12345")
+
+        summary = dashboard["run_data"]["summary"]
+        assert "full-agent-dissect" in summary
+        assert "1.0" in summary["full-agent-dissect"]
+        s = summary["full-agent-dissect"]["1.0"]
+        assert s["base_avg"] == 7000
+        assert s["pr_avg"] == 7500
+        assert s["delta_pct"] == 7.1
+
+    def test_nightly_run_no_pr_page(self, sample_results_dir, tmp_path):
+        """Nightly runs (no pr_number) should not generate a pr/ directory."""
+        results = load_results(str(sample_results_dir))
+        args = _make_args(run_type="nightly", pr_number="")
+        dashboard = generate_dashboard_data(results, args, "55555")
+
+        output_dir = str(tmp_path / "_site")
+        build_site(output_dir, "", dashboard)
+
+        site = Path(output_dir)
+        assert not (site / "pr").exists()
+        assert (site / "run" / "55555" / "index.html").exists()
+
+    def test_pr_page_generated(self, sample_results_dir, tmp_path):
+        """When pr_number is set, a pr/{N}/index.html should be generated."""
+        results = load_results(str(sample_results_dir))
+        args = _make_args(pr_number="42", run_type="pr")
+        dashboard = generate_dashboard_data(results, args, "77777")
+
+        output_dir = str(tmp_path / "_site")
+        build_site(output_dir, "", dashboard)
+
+        site = Path(output_dir)
+        assert (site / "pr" / "42" / "index.html").exists()
+        assert (site / "run" / "77777" / "index.html").exists()
+
+        # PR page should contain the page data
+        pr_html = (site / "pr" / "42" / "index.html").read_text()
+        assert '"pr_number": "42"' in pr_html
+
+    def test_index_html_has_page_data(self, sample_results_dir, tmp_path):
+        results = load_results(str(sample_results_dir))
+        args = _make_args()
+        dashboard = generate_dashboard_data(results, args, "12345")
+
+        output_dir = str(tmp_path / "_site")
+        build_site(output_dir, "", dashboard)
+
+        site = Path(output_dir)
+        index_html = (site / "index.html").read_text()
+        assert '<script id="page-data" type="application/json">' in index_html
+        # Should NOT contain the placeholder
+        assert "__PAGE_DATA__" not in index_html
+
+    def test_run_html_has_page_data(self, sample_results_dir, tmp_path):
+        results = load_results(str(sample_results_dir))
+        args = _make_args()
+        dashboard = generate_dashboard_data(results, args, "12345")
+
+        output_dir = str(tmp_path / "_site")
+        build_site(output_dir, "", dashboard)
+
+        site = Path(output_dir)
+        run_html = (site / "run" / "12345" / "index.html").read_text()
+        assert '<script id="page-data" type="application/json">' in run_html
+        assert "__PAGE_DATA__" not in run_html
+        assert '"run_id": "12345"' in run_html

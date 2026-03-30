@@ -1,6 +1,8 @@
 name: Filebeat Pipeline Benchmark
 
 on:
+  schedule:
+    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       base_ref:
@@ -35,6 +37,14 @@ on:
         description: "Seconds to measure each run"
         required: true
         default: "20"
+      pr_number:
+        description: "PR number being benchmarked (optional)"
+        required: false
+        default: ""
+      run_type:
+        description: "Run type: pr or nightly"
+        required: false
+        default: "pr"
 
 permissions:
   contents: write
@@ -54,8 +64,8 @@ jobs:
       - name: Resolve commit SHA
         id: resolve
         run: |
-          REPO=${{ matrix.variant == 'pr' && (inputs.pr_repo || inputs.beats_repo) || inputs.beats_repo }}
-          REF=${{ matrix.variant == 'pr' && inputs.pr_ref || inputs.base_ref }}
+          REPO=${{ matrix.variant == 'pr' && (inputs.pr_repo || inputs.beats_repo || 'elastic/beats') || (inputs.beats_repo || 'elastic/beats') }}
+          REF=${{ matrix.variant == 'pr' && (inputs.pr_ref || 'main') || (inputs.base_ref || 'main') }}
           SHA=$(git ls-remote "https://github.com/${REPO}.git" "${REF}" | head -1 | cut -f1)
           # If REF is already a SHA (ls-remote returns empty), use it directly
           if [ -z "$SHA" ]; then SHA="$REF"; fi
@@ -80,8 +90,8 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
-          repository: ${{ matrix.variant == 'pr' && (inputs.pr_repo || inputs.beats_repo) || inputs.beats_repo }}
-          ref: ${{ matrix.variant == 'pr' && inputs.pr_ref || inputs.base_ref }}
+          repository: ${{ matrix.variant == 'pr' && (inputs.pr_repo || inputs.beats_repo || 'elastic/beats') || (inputs.beats_repo || 'elastic/beats') }}
+          ref: ${{ matrix.variant == 'pr' && (inputs.pr_ref || 'main') || (inputs.base_ref || 'main') }}
           path: beats
 
       - name: Build filebeat
@@ -134,8 +144,8 @@ jobs:
     steps:
       - id: gen
         run: |
-          echo "scenarios=$(echo '${{ inputs.scenarios }}' | python3 -c 'import sys; print("[\"" + "\",\"".join(sys.stdin.read().strip().split(",")) + "\"]")')" >> $GITHUB_OUTPUT
-          echo "cpus=$(echo '${{ inputs.cpus }}' | python3 -c 'import sys; print("[\"" + "\",\"".join(sys.stdin.read().strip().split(",")) + "\"]")')" >> $GITHUB_OUTPUT
+          echo "scenarios=$(echo '${{ inputs.scenarios || 'full-agent-dissect,full-agent-rename-only,enrichment-only,passthrough' }}' | python3 -c 'import sys; print("[\"" + "\",\"".join(sys.stdin.read().strip().split(",")) + "\"]")')" >> $GITHUB_OUTPUT
+          echo "cpus=$(echo '${{ inputs.cpus || '0.5,1.0' }}' | python3 -c 'import sys; print("[\"" + "\",\"".join(sys.stdin.read().strip().split(",")) + "\"]")')" >> $GITHUB_OUTPUT
 
   # ---------------------------------------------------------------
   # Benchmark matrix: scenario × cpu
@@ -174,8 +184,8 @@ jobs:
             --config /tmp/fb-config.yml \
             --mock-es /usr/local/bin/mock-es \
             --cpus ${{ matrix.cpu }} \
-            --measure ${{ inputs.measurement_seconds }} \
-            --runs ${{ inputs.runs_per_scenario }} \
+            --measure ${{ inputs.measurement_seconds || '20' }} \
+            --runs ${{ inputs.runs_per_scenario || '3' }} \
             --scenario ${{ matrix.scenario }} \
             --output-dir results
 
@@ -228,18 +238,24 @@ jobs:
           fi
 
       - name: Generate summary and site
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           uv run beats-bench summarize \
             --results-dir all-results \
             --existing-data site-data \
             --output-dir _site \
-            --base-ref "${{ inputs.base_ref }}" \
-            --pr-ref "${{ inputs.pr_ref }}" \
-            --base-repo "${{ inputs.beats_repo }}" \
-            --pr-repo "${{ inputs.pr_repo || inputs.beats_repo }}" \
-            --runs-per-scenario "${{ inputs.runs_per_scenario }}" \
-            --measure-seconds "${{ inputs.measurement_seconds }}" \
-            --run-id "${{ github.run_id }}"
+            --base-ref "${{ inputs.base_ref || 'main' }}" \
+            --pr-ref "${{ inputs.pr_ref || 'main' }}" \
+            --base-repo "${{ inputs.beats_repo || 'elastic/beats' }}" \
+            --pr-repo "${{ inputs.pr_repo || inputs.beats_repo || 'elastic/beats' }}" \
+            --runs-per-scenario "${{ inputs.runs_per_scenario || '3' }}" \
+            --measure-seconds "${{ inputs.measurement_seconds || '20' }}" \
+            --run-id "${{ github.run_id }}" \
+            --pr-number "${{ inputs.pr_number || '' }}" \
+            --run-type "${{ inputs.run_type || 'nightly' }}" \
+            --commit-sha "${{ github.sha }}" \
+            --pr-repo-owner "${{ inputs.beats_repo || 'elastic/beats' }}"
 
       - name: Post summary to job
         run: cat summary.md >> $GITHUB_STEP_SUMMARY

@@ -53,6 +53,10 @@ def _cmd_summarize(args: argparse.Namespace) -> None:
             existing_data=getattr(args, "existing_data", "") or "",
             output_dir=getattr(args, "output_dir", "") or "",
             run_id=getattr(args, "run_id", "") or "",
+            pr_number=getattr(args, "pr_number", "") or "",
+            run_type=getattr(args, "run_type", "pr") or "pr",
+            commit_sha=getattr(args, "commit_sha", "") or "",
+            pr_repo_owner=getattr(args, "pr_repo_owner", "") or "",
         )
     )
 
@@ -156,6 +160,10 @@ def main() -> None:
     p_summarize.add_argument("--existing-data", default="", help="Path to existing data directory")
     p_summarize.add_argument("--output-dir", default="", help="Path to write the full static site")
     p_summarize.add_argument("--run-id", default="", help="Current workflow run ID")
+    p_summarize.add_argument("--pr-number", default="", help="PR number being benchmarked")
+    p_summarize.add_argument("--run-type", default="pr", help="Run type: pr or nightly")
+    p_summarize.add_argument("--commit-sha", default="", help="Commit SHA of the PR head")
+    p_summarize.add_argument("--pr-repo-owner", default="", help="PR repo owner for gh CLI")
     p_summarize.set_defaults(func=_cmd_summarize)
 
     # local-run

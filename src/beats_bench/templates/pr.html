@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PR Details - beats-bench</title>
+  <link rel="stylesheet" href="../../style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="../../index.html">Overview</a>
+      <span class="breadcrumb-sep">/</span>
+      <span id="breadcrumb-current">PR</span>
+    </nav>
+
+    <div id="pr-header" class="pr-header"></div>
+
+    <div id="loading" class="loading">Loading PR data</div>
+    <div id="error" class="error" style="display:none"></div>
+    <div id="content" style="display:none">
+
+      <!-- Best delta summary -->
+      <div class="card" id="summary-card">
+        <h2>Summary</h2>
+        <div id="summary-content"></div>
+      </div>
+
+      <!-- Runs list -->
+      <div class="card">
+        <h2>Benchmark Runs</h2>
+        <div id="runs-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script id="page-data" type="application/json">__PAGE_DATA__</script>
+  <script>
+    const pageData = JSON.parse(document.getElementById('page-data').textContent);
+    const prNumber = pageData.pr_number;
+    const prMeta = pageData.pr_metadata || {};
+    const runs = pageData.runs || [];
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function shortRef(ref) {
+      if (ref && ref.length > 20) return ref.substring(0, 20) + '...';
+      return ref || '';
+    }
+
+    function stateClass(state) {
+      if (!state) return 'pr-open';
+      const s = state.toUpperCase();
+      if (s === 'MERGED') return 'pr-merged';
+      if (s === 'CLOSED') return 'pr-closed';
+      return 'pr-open';
+    }
+
+    function init() {
+      const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const contentEl = document.getElementById('content');
+
+      document.title = `PR #${prNumber} - beats-bench`;
+      document.getElementById('breadcrumb-current').textContent = `PR #${prNumber}`;
+
+      // Render PR header
+      const headerEl = document.getElementById('pr-header');
+      const title = prMeta.title || `PR #${prNumber}`;
+      const author = prMeta.author ? (prMeta.author.login || prMeta.author) : '';
+      const state = prMeta.state || 'OPEN';
+      const url = prMeta.url || `https://github.com/elastic/beats/pull/${prNumber}`;
+
+      headerEl.innerHTML = `
+        <h1>${title}</h1>
+        <div class="pr-header-meta">
+          <span class="pr-state-badge ${stateClass(state)}">${state}</span>
+          ${author ? `<span class="pr-author">by ${typeof author === 'object' ? author.login : author}</span>` : ''}
+          <a href="${url}" class="pr-github-link" target="_blank">View on GitHub</a>
+        </div>
+      `;
+
+      if (runs.length === 0) {
+        loadingEl.style.display = 'none';
+        errorEl.textContent = 'No benchmark runs found for this PR.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // Find best delta across all runs
+      renderSummary();
+      renderRunsList();
+
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+    }
+
+    function renderSummary() {
+      const el = document.getElementById('summary-content');
+      let bestDelta = null;
+      let bestScenario = '';
+      let bestCpu = '';
+
+      for (const run of runs) {
+        const summary = run.summary || {};
+        for (const [scenario, cpuData] of Object.entries(summary)) {
+          for (const [cpu, stats] of Object.entries(cpuData)) {
+            const d = stats.delta_pct;
+            if (bestDelta === null || Math.abs(d) > Math.abs(bestDelta)) {
+              bestDelta = d;
+              bestScenario = scenario;
+              bestCpu = cpu;
+            }
+          }
+        }
+      }
+
+      if (bestDelta !== null) {
+        const sign = bestDelta >= 0 ? '+' : '';
+        const cls = bestDelta > 1 ? 'delta-positive' : bestDelta < -1 ? 'delta-negative' : 'delta-neutral';
+        el.innerHTML = `
+          <p>Best delta: <span class="${cls}" style="font-size:18px;font-weight:700">${sign}${bestDelta.toFixed(1)}%</span>
+          in <strong>${bestScenario}</strong> (${bestCpu} CPU)</p>
+          <p style="color:var(--text-muted);font-size:13px">${runs.length} benchmark run(s)</p>
+        `;
+      } else {
+        el.innerHTML = '<p style="color:var(--text-muted)">No summary data available.</p>';
+      }
+    }
+
+    function renderRunsList() {
+      const container = document.getElementById('runs-list');
+      let html = '';
+      for (const run of runs) {
+        const summary = run.summary || {};
+        let summaryChips = '';
+        for (const [scenario, cpuData] of Object.entries(summary)) {
+          for (const [cpu, stats] of Object.entries(cpuData)) {
+            const sign = stats.delta_pct >= 0 ? '+' : '';
+            const cls = stats.delta_pct > 1 ? 'delta-positive' : stats.delta_pct < -1 ? 'delta-negative' : 'delta-neutral';
+            summaryChips += `<span class="scenario-tag ${cls}">${scenario} (${cpu}): ${sign}${stats.delta_pct}%</span> `;
+          }
+        }
+
+        html += `
+          <a class="run-item" href="../../run/${run.id}/index.html">
+            <div class="run-meta">
+              <div class="refs">
+                <span class="badge badge-base">base: ${run.base_ref}</span>
+                <span class="badge badge-pr">PR: ${shortRef(run.pr_ref)}</span>
+              </div>
+              <div class="date">${formatDate(run.date)} &mdash; Run #${run.id}</div>
+            </div>
+            <div class="run-scenarios">${summaryChips}</div>
+          </a>`;
+      }
+      container.innerHTML = html;
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -4,12 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Run Details - beats-bench</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../../style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <script id="page-data" type="application/json">__PAGE_DATA__</script>
   <div class="container">
-    <a href="index.html" class="back-link">&larr; Back to overview</a>
+    <nav class="breadcrumb" id="breadcrumb">
+      <a href="../../index.html">Overview</a>
+    </nav>
 
     <div class="header">
       <h1>Run Details</h1>
@@ -127,26 +130,52 @@
       return val.toLocaleString();
     }
 
+    function getPageData() {
+      try {
+        return JSON.parse(document.getElementById('page-data').textContent);
+      } catch (e) {
+        return {};
+      }
+    }
+
     function getRunId() {
+      const pd = getPageData();
+      if (pd.run_id) return pd.run_id;
       const params = new URLSearchParams(window.location.search);
       return params.get('id');
+    }
+
+    function renderBreadcrumb(runId, pageDataObj) {
+      const nav = document.getElementById('breadcrumb');
+      const prNumber = pageDataObj.pr_number || '';
+      let html = '<a href="../../index.html">Overview</a>';
+      if (prNumber) {
+        html += ' <span class="breadcrumb-sep">/</span> ';
+        html += `<a href="../../pr/${prNumber}/index.html">PR #${prNumber}</a>`;
+      }
+      html += ' <span class="breadcrumb-sep">/</span> ';
+      html += `<span>Run #${runId}</span>`;
+      nav.innerHTML = html;
     }
 
     async function init() {
       const loadingEl = document.getElementById('loading');
       const errorEl = document.getElementById('error');
       const contentEl = document.getElementById('content');
+      const pageDataObj = getPageData();
 
       const runId = getRunId();
       if (!runId) {
         loadingEl.style.display = 'none';
-        errorEl.textContent = 'No run ID specified. Use ?id=<run-id>';
+        errorEl.textContent = 'No run ID specified.';
         errorEl.style.display = 'block';
         return;
       }
 
+      renderBreadcrumb(runId, pageDataObj);
+
       try {
-        const raw = await fetchJSON(`data/runs/${runId}.json`);
+        const raw = await fetchJSON(`../../data/runs/${runId}.json`);
         runData = raw.run_data || raw;
 
         document.title = `Run #${runId} - beats-bench`;
@@ -342,6 +371,11 @@
             data: samples.map(s => scale ? (s[key] / scale) : s[key]),
           };
         }
+
+        // --- Anchor wrapper for this scenario ---
+        const anchor = document.createElement('div');
+        anchor.id = `scenario-${scenario}`;
+        container.appendChild(anchor);
 
         // --- EPS over time ---
         const baseEPS = computeEPSFromSamples(baseSamples);
