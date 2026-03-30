@@ -203,13 +203,8 @@ jobs:
   summarize:
     needs: bench
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     permissions:
       contents: write
-      pages: write
-      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -263,7 +258,7 @@ jobs:
       - name: Post summary to job
         run: cat summary.md >> $GITHUB_STEP_SUMMARY
 
-      - name: Push new data to bench-data branch
+      - name: Push data to bench-data branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -274,16 +269,7 @@ jobs:
           git commit -m "Add benchmark data for run ${{ github.run_id }}" || true
           git push origin bench-data
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-      - name: Deploy to GitHub Pages
-        id: deploy
-        uses: actions/deploy-pages@v4
-
-      - name: Upload summary and diffs
+      - name: Upload summary
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-summary
