@@ -50,13 +50,33 @@ jobs:
       matrix:
         variant: [base, pr]
     steps:
+      - name: Resolve commit SHA
+        id: resolve
+        run: |
+          REPO=${{ matrix.variant == 'pr' && (inputs.pr_repo || inputs.beats_repo) || inputs.beats_repo }}
+          REF=${{ matrix.variant == 'pr' && inputs.pr_ref || inputs.base_ref }}
+          SHA=$(git ls-remote "https://github.com/${REPO}.git" "${REF}" | head -1 | cut -f1)
+          # If REF is already a SHA (ls-remote returns empty), use it directly
+          if [ -z "$SHA" ]; then SHA="$REF"; fi
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "Resolved $REF -> $SHA"
+
+      - name: Check binary cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: filebeat-${{ matrix.variant }}
+          key: filebeat-${{ steps.resolve.outputs.sha }}
+
       - name: Set up Go
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-go@v5
         with:
           go-version: "1.26"
           cache: false
 
       - name: Checkout beats
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: ${{ matrix.variant == 'pr' && (inputs.pr_repo || inputs.beats_repo) || inputs.beats_repo }}
@@ -64,10 +84,15 @@ jobs:
           path: beats
 
       - name: Build filebeat
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd beats/x-pack/filebeat
           CGO_ENABLED=0 GOFLAGS=-mod=mod go build -o ${{ github.workspace }}/filebeat-${{ matrix.variant }} .
           echo "Build ID: $(go tool buildid ${{ github.workspace }}/filebeat-${{ matrix.variant }} | cut -c1-16)"
+
+      - name: Cache hit
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: echo "Using cached binary for ${{ steps.resolve.outputs.sha }}"
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
