@@ -9,10 +9,20 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"sync/atomic"
+	"time"
 )
 
-var docsIngested atomic.Int64
+var (
+	docsIngested  atomic.Int64
+	bytesReceived atomic.Int64
+	batchCount    atomic.Int64
+	batchDocsMin  atomic.Int64
+	batchDocsMax  atomic.Int64
+	startTime     time.Time
+	startOnce     sync.Once
+)
 
 func main() {
 	addr := ":9200"
@@ -22,10 +32,35 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// Stats endpoint for retrieving doc count
+	// Stats endpoint
 	mux.HandleFunc("GET /_mock/stats", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"docs_ingested":%d}`, docsIngested.Load())
+		docs := docsIngested.Load()
+		batches := batchCount.Load()
+		bytes := bytesReceived.Load()
+		elapsed := time.Since(startTime).Seconds()
+		var docsPerSec float64
+		var avgBatchSize float64
+		if elapsed > 0 {
+			docsPerSec = float64(docs) / elapsed
+		}
+		if batches > 0 {
+			avgBatchSize = float64(docs) / float64(batches)
+		}
+		fmt.Fprintf(w, `{"docs_ingested":%d,"bytes_received":%d,"batches":%d,"batch_docs_min":%d,"batch_docs_max":%d,"avg_batch_size":%.1f,"elapsed_sec":%.1f,"docs_per_sec":%.0f}`,
+			docs, bytes, batches, batchDocsMin.Load(), batchDocsMax.Load(), avgBatchSize, elapsed, docsPerSec)
+	})
+
+	// Reset stats
+	mux.HandleFunc("POST /_mock/reset", func(w http.ResponseWriter, r *http.Request) {
+		docsIngested.Store(0)
+		bytesReceived.Store(0)
+		batchCount.Store(0)
+		batchDocsMin.Store(0)
+		batchDocsMax.Store(0)
+		startTime = time.Now()
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"reset":true}`)
 	})
 
 	// Catch-all: route everything through a single handler that inspects
@@ -71,8 +106,8 @@ func main() {
 }
 
 func bulkHandler(w http.ResponseWriter, r *http.Request) {
-	// Read body and count action lines to determine document count.
-	// Decompress if gzipped.
+	startOnce.Do(func() { startTime = time.Now() })
+
 	var bodyReader io.Reader = r.Body
 	if r.Header.Get("Content-Encoding") == "gzip" {
 		gz, err := gzip.NewReader(r.Body)
@@ -82,31 +117,50 @@ func bulkHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Bulk format is pairs of lines: action\n source\n
-	// Action lines start with {"create", {"index", or {"update".
 	body, _ := io.ReadAll(bodyReader)
+	bytesReceived.Add(int64(len(body)))
+
 	docs := 0
 	for i := 0; i < len(body); {
-		// Find start of line
 		if body[i] == '{' && i+8 < len(body) {
-			// Check if this is an action line (starts with {"create, {"index, or {"update)
 			prefix := string(body[i : i+8])
 			if prefix == `{"create` || prefix == `{"index"` || prefix == `{"update` || prefix == `{"delete` {
 				docs++
 			}
 		}
-		// Skip to next line
 		for i < len(body) && body[i] != '\n' {
 			i++
 		}
-		i++ // skip the \n
+		i++
 	}
 	if docs < 1 && len(body) > 0 {
 		docs = 1
 	}
-	docsIngested.Add(int64(docs))
 
-	// Build a response with one item per document.
+	docsIngested.Add(int64(docs))
+	batchCount.Add(1)
+
+	// Track min/max batch sizes (lock-free)
+	d := int64(docs)
+	for {
+		cur := batchDocsMin.Load()
+		if cur != 0 && cur <= d {
+			break
+		}
+		if batchDocsMin.CompareAndSwap(cur, d) {
+			break
+		}
+	}
+	for {
+		cur := batchDocsMax.Load()
+		if cur >= d {
+			break
+		}
+		if batchDocsMax.CompareAndSwap(cur, d) {
+			break
+		}
+	}
+
 	w.Header().Set("X-Elastic-Product", "Elasticsearch")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"took":1,"errors":false,"items":[`))
