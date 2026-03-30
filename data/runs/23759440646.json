@@ -1,0 +1,946 @@
+{
+  "run_data": {
+    "id": "23759440646",
+    "date": "2026-03-30T18:02:37Z",
+    "base_ref": "main",
+    "pr_ref": "claude-optimize-add-field-processors-ep8Ok",
+    "base_repo": "elastic/beats",
+    "pr_repo": "strawgate/beats",
+    "scenarios": {
+      "full-agent-dissect": {
+        "1.0": {
+          "base_eps": [
+            16066,
+            16189,
+            16328
+          ],
+          "pr_eps": [
+            18319,
+            18186,
+            18271
+          ],
+          "base_runs": [
+            {
+              "label": "base",
+              "eps": 16066,
+              "events": 321336,
+              "measure_sec": 20,
+              "memory_alloc_mb": 13.7,
+              "memory_rss_mb": 110.07,
+              "gc_next_mb": 26.12,
+              "goroutines": 39,
+              "mock_docs": 321536,
+              "mock_batches": 314,
+              "mock_bytes_mb": 597.03,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 16065.0,
+              "output_acked": 417792,
+              "output_failed": 0,
+              "output_batches": 408,
+              "memory_total_mb": 7489.16,
+              "cpu_ticks": 26070,
+              "bytes_per_event": 1948,
+              "alloc_per_event": 24438,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 178368,
+                  "mem_bytes": 17132512,
+                  "rss_bytes": 116031488
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 257760,
+                  "mem_bytes": 15262656,
+                  "rss_bytes": 115892224
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 337455,
+                  "mem_bytes": 18419944,
+                  "rss_bytes": 116101120
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 418011,
+                  "mem_bytes": 22397264,
+                  "rss_bytes": 115408896
+                }
+              ]
+            },
+            {
+              "label": "base",
+              "eps": 16189,
+              "events": 323787,
+              "measure_sec": 20,
+              "memory_alloc_mb": 15.05,
+              "memory_rss_mb": 111.95,
+              "gc_next_mb": 25.36,
+              "goroutines": 40,
+              "mock_docs": 323584,
+              "mock_batches": 316,
+              "mock_bytes_mb": 600.83,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 16162.0,
+              "output_acked": 420864,
+              "output_failed": 0,
+              "output_batches": 412,
+              "memory_total_mb": 7560.01,
+              "cpu_ticks": 26070,
+              "bytes_per_event": 1946,
+              "alloc_per_event": 24483,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 180096,
+                  "mem_bytes": 14585680,
+                  "rss_bytes": 119328768
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 261289,
+                  "mem_bytes": 19517304,
+                  "rss_bytes": 118484992
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 342142,
+                  "mem_bytes": 17312040,
+                  "rss_bytes": 116736000
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 422011,
+                  "mem_bytes": 21001824,
+                  "rss_bytes": 117391360
+                }
+              ]
+            },
+            {
+              "label": "base",
+              "eps": 16328,
+              "events": 326579,
+              "measure_sec": 20,
+              "memory_alloc_mb": 12.44,
+              "memory_rss_mb": 111.0,
+              "gc_next_mb": 23.83,
+              "goroutines": 38,
+              "mock_docs": 326656,
+              "mock_batches": 319,
+              "mock_bytes_mb": 606.53,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 16323.0,
+              "output_acked": 422912,
+              "output_failed": 0,
+              "output_batches": 413,
+              "memory_total_mb": 7590.1,
+              "cpu_ticks": 26060,
+              "bytes_per_event": 1947,
+              "alloc_per_event": 24370,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 177793,
+                  "mem_bytes": 14979336,
+                  "rss_bytes": 113729536
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 260071,
+                  "mem_bytes": 25944600,
+                  "rss_bytes": 116899840
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 341293,
+                  "mem_bytes": 18815104,
+                  "rss_bytes": 114348032
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 423698,
+                  "mem_bytes": 12500576,
+                  "rss_bytes": 116350976
+                }
+              ]
+            }
+          ],
+          "pr_runs": [
+            {
+              "label": "pr",
+              "eps": 18319,
+              "events": 366389,
+              "measure_sec": 20,
+              "memory_alloc_mb": 21.58,
+              "memory_rss_mb": 111.43,
+              "gc_next_mb": 23.8,
+              "goroutines": 38,
+              "mock_docs": 366592,
+              "mock_batches": 358,
+              "mock_bytes_mb": 680.69,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 18318.0,
+              "output_acked": 474112,
+              "output_failed": 0,
+              "output_batches": 463,
+              "memory_total_mb": 6362.09,
+              "cpu_ticks": 26080,
+              "bytes_per_event": 1948,
+              "alloc_per_event": 18208,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 198265,
+                  "mem_bytes": 19462808,
+                  "rss_bytes": 115277824
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 289996,
+                  "mem_bytes": 18864848,
+                  "rss_bytes": 116793344
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 381231,
+                  "mem_bytes": 18929176,
+                  "rss_bytes": 117538816
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 474548,
+                  "mem_bytes": 22235488,
+                  "rss_bytes": 116842496
+                }
+              ]
+            },
+            {
+              "label": "pr",
+              "eps": 18186,
+              "events": 363738,
+              "measure_sec": 20,
+              "memory_alloc_mb": 17.9,
+              "memory_rss_mb": 112.11,
+              "gc_next_mb": 26.05,
+              "goroutines": 38,
+              "mock_docs": 363520,
+              "mock_batches": 355,
+              "mock_bytes_mb": 674.99,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 18164.0,
+              "output_acked": 473088,
+              "output_failed": 0,
+              "output_batches": 462,
+              "memory_total_mb": 6349.0,
+              "cpu_ticks": 26060,
+              "bytes_per_event": 1946,
+              "alloc_per_event": 18303,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 201105,
+                  "mem_bytes": 22662488,
+                  "rss_bytes": 115892224
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 292079,
+                  "mem_bytes": 17935624,
+                  "rss_bytes": 117022720
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 383420,
+                  "mem_bytes": 20723776,
+                  "rss_bytes": 116142080
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 473589,
+                  "mem_bytes": 18030456,
+                  "rss_bytes": 117559296
+                }
+              ]
+            },
+            {
+              "label": "pr",
+              "eps": 18271,
+              "events": 365426,
+              "measure_sec": 20,
+              "memory_alloc_mb": 14.47,
+              "memory_rss_mb": 112.86,
+              "gc_next_mb": 26.95,
+              "goroutines": 38,
+              "mock_docs": 365568,
+              "mock_batches": 357,
+              "mock_bytes_mb": 678.79,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 18264.0,
+              "output_acked": 473088,
+              "output_failed": 0,
+              "output_batches": 462,
+              "memory_total_mb": 6347.93,
+              "cpu_ticks": 26090,
+              "bytes_per_event": 1948,
+              "alloc_per_event": 18215,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 200294,
+                  "mem_bytes": 20788456,
+                  "rss_bytes": 118259712
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 290922,
+                  "mem_bytes": 21607608,
+                  "rss_bytes": 115113984
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 382847,
+                  "mem_bytes": 12698632,
+                  "rss_bytes": 117968896
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 473467,
+                  "mem_bytes": 14576176,
+                  "rss_bytes": 118235136
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "full-agent-rename-only": {
+        "1.0": {
+          "base_eps": [
+            18657,
+            18603,
+            18946
+          ],
+          "pr_eps": [
+            20773,
+            20837,
+            20965
+          ],
+          "base_runs": [
+            {
+              "label": "base",
+              "eps": 18657,
+              "events": 373145,
+              "measure_sec": 20,
+              "memory_alloc_mb": 18.64,
+              "memory_rss_mb": 110.28,
+              "gc_next_mb": 22.99,
+              "goroutines": 40,
+              "mock_docs": 372736,
+              "mock_batches": 364,
+              "mock_bytes_mb": 593.99,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 18620.0,
+              "output_acked": 486400,
+              "output_failed": 0,
+              "output_batches": 476,
+              "memory_total_mb": 6316.74,
+              "cpu_ticks": 26050,
+              "bytes_per_event": 1669,
+              "alloc_per_event": 17751,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 210165,
+                  "mem_bytes": 21403976,
+                  "rss_bytes": 114483200
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 301888,
+                  "mem_bytes": 14836744,
+                  "rss_bytes": 114741248
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 395425,
+                  "mem_bytes": 19489000,
+                  "rss_bytes": 115511296
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 487570,
+                  "mem_bytes": 19023704,
+                  "rss_bytes": 115634176
+                }
+              ]
+            },
+            {
+              "label": "base",
+              "eps": 18603,
+              "events": 372073,
+              "measure_sec": 20,
+              "memory_alloc_mb": 22.08,
+              "memory_rss_mb": 111.7,
+              "gc_next_mb": 24.18,
+              "goroutines": 38,
+              "mock_docs": 371712,
+              "mock_batches": 363,
+              "mock_bytes_mb": 592.36,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 18574.0,
+              "output_acked": 485376,
+              "output_failed": 0,
+              "output_batches": 474,
+              "memory_total_mb": 6297.31,
+              "cpu_ticks": 26070,
+              "bytes_per_event": 1669,
+              "alloc_per_event": 17747,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 206277,
+                  "mem_bytes": 20227488,
+                  "rss_bytes": 116523008
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 301904,
+                  "mem_bytes": 12497016,
+                  "rss_bytes": 115908608
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 394112,
+                  "mem_bytes": 22917112,
+                  "rss_bytes": 114176000
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 486082,
+                  "mem_bytes": 22814208,
+                  "rss_bytes": 117121024
+                }
+              ]
+            },
+            {
+              "label": "base",
+              "eps": 18946,
+              "events": 378934,
+              "measure_sec": 20,
+              "memory_alloc_mb": 19.54,
+              "memory_rss_mb": 110.62,
+              "gc_next_mb": 23.75,
+              "goroutines": 38,
+              "mock_docs": 378880,
+              "mock_batches": 370,
+              "mock_bytes_mb": 603.78,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 18933.0,
+              "output_acked": 487424,
+              "output_failed": 0,
+              "output_batches": 476,
+              "memory_total_mb": 6319.92,
+              "cpu_ticks": 26070,
+              "bytes_per_event": 1671,
+              "alloc_per_event": 17488,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 202089,
+                  "mem_bytes": 17228824,
+                  "rss_bytes": 116600832
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 296918,
+                  "mem_bytes": 14697840,
+                  "rss_bytes": 115191808
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 393022,
+                  "mem_bytes": 22416152,
+                  "rss_bytes": 113577984
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 487822,
+                  "mem_bytes": 19834960,
+                  "rss_bytes": 115998720
+                }
+              ]
+            }
+          ],
+          "pr_runs": [
+            {
+              "label": "pr",
+              "eps": 20773,
+              "events": 415472,
+              "measure_sec": 20,
+              "memory_alloc_mb": 11.01,
+              "memory_rss_mb": 111.75,
+              "gc_next_mb": 22.52,
+              "goroutines": 38,
+              "mock_docs": 415744,
+              "mock_batches": 406,
+              "mock_bytes_mb": 662.53,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 20773.0,
+              "output_acked": 537600,
+              "output_failed": 0,
+              "output_batches": 525,
+              "memory_total_mb": 5529.53,
+              "cpu_ticks": 26060,
+              "bytes_per_event": 1672,
+              "alloc_per_event": 13956,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 226204,
+                  "mem_bytes": 15985824,
+                  "rss_bytes": 117006336
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 327134,
+                  "mem_bytes": 21436760,
+                  "rss_bytes": 115286016
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 432932,
+                  "mem_bytes": 15055288,
+                  "rss_bytes": 114327552
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 538088,
+                  "mem_bytes": 25191160,
+                  "rss_bytes": 117071872
+                }
+              ]
+            },
+            {
+              "label": "pr",
+              "eps": 20837,
+              "events": 416744,
+              "measure_sec": 20,
+              "memory_alloc_mb": 20.44,
+              "memory_rss_mb": 109.59,
+              "gc_next_mb": 22.42,
+              "goroutines": 38,
+              "mock_docs": 417792,
+              "mock_batches": 408,
+              "mock_bytes_mb": 665.79,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 20871.0,
+              "output_acked": 539648,
+              "output_failed": 0,
+              "output_batches": 527,
+              "memory_total_mb": 5549.07,
+              "cpu_ticks": 26090,
+              "bytes_per_event": 1675,
+              "alloc_per_event": 13962,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 228507,
+                  "mem_bytes": 24606344,
+                  "rss_bytes": 116305920
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 332526,
+                  "mem_bytes": 17226824,
+                  "rss_bytes": 115929088
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 436366,
+                  "mem_bytes": 14559176,
+                  "rss_bytes": 116068352
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 540066,
+                  "mem_bytes": 21178992,
+                  "rss_bytes": 114909184
+                }
+              ]
+            },
+            {
+              "label": "pr",
+              "eps": 20965,
+              "events": 419300,
+              "measure_sec": 20,
+              "memory_alloc_mb": 23.23,
+              "memory_rss_mb": 108.7,
+              "gc_next_mb": 26.22,
+              "goroutines": 38,
+              "mock_docs": 419840,
+              "mock_batches": 410,
+              "mock_bytes_mb": 669.05,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 20976.0,
+              "output_acked": 542720,
+              "output_failed": 0,
+              "output_batches": 530,
+              "memory_total_mb": 5581.53,
+              "cpu_ticks": 26080,
+              "bytes_per_event": 1673,
+              "alloc_per_event": 13958,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 226864,
+                  "mem_bytes": 14273384,
+                  "rss_bytes": 116400128
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 333177,
+                  "mem_bytes": 20938080,
+                  "rss_bytes": 113422336
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 438439,
+                  "mem_bytes": 17549704,
+                  "rss_bytes": 116449280
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 543100,
+                  "mem_bytes": 23958712,
+                  "rss_bytes": 113582080
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "passthrough": {
+        "1.0": {
+          "base_eps": [
+            73976,
+            72955,
+            71366
+          ],
+          "pr_eps": [
+            67940,
+            71373,
+            71730
+          ],
+          "base_runs": [
+            {
+              "label": "base",
+              "eps": 73976,
+              "events": 1479521,
+              "measure_sec": 20,
+              "memory_alloc_mb": 16.14,
+              "memory_rss_mb": 108.27,
+              "gc_next_mb": 22.61,
+              "goroutines": 39,
+              "mock_docs": 1479680,
+              "mock_batches": 1445,
+              "mock_bytes_mb": 799.58,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 73931.0,
+              "output_acked": 1918976,
+              "output_failed": 0,
+              "output_batches": 1874,
+              "memory_total_mb": 4551.71,
+              "cpu_ticks": 26050,
+              "bytes_per_event": 567,
+              "alloc_per_event": 3226,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 808319,
+                  "mem_bytes": 15692064,
+                  "rss_bytes": 115933184
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 1178288,
+                  "mem_bytes": 12731368,
+                  "rss_bytes": 113795072
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 1549006,
+                  "mem_bytes": 20471504,
+                  "rss_bytes": 114544640
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 1919489,
+                  "mem_bytes": 16266504,
+                  "rss_bytes": 113532928
+                }
+              ]
+            },
+            {
+              "label": "base",
+              "eps": 72955,
+              "events": 1459106,
+              "measure_sec": 20,
+              "memory_alloc_mb": 14.04,
+              "memory_rss_mb": 106.24,
+              "gc_next_mb": 23.2,
+              "goroutines": 38,
+              "mock_docs": 1459200,
+              "mock_batches": 1425,
+              "mock_bytes_mb": 788.49,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 72902.0,
+              "output_acked": 1887232,
+              "output_failed": 0,
+              "output_batches": 1843,
+              "memory_total_mb": 4477.32,
+              "cpu_ticks": 26060,
+              "bytes_per_event": 567,
+              "alloc_per_event": 3218,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 792801,
+                  "mem_bytes": 21198448,
+                  "rss_bytes": 110227456
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 1157013,
+                  "mem_bytes": 14874728,
+                  "rss_bytes": 111353856
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 1523103,
+                  "mem_bytes": 19453808,
+                  "rss_bytes": 111198208
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 1888150,
+                  "mem_bytes": 14144016,
+                  "rss_bytes": 111394816
+                }
+              ]
+            },
+            {
+              "label": "base",
+              "eps": 71366,
+              "events": 1427321,
+              "measure_sec": 20,
+              "memory_alloc_mb": 19.24,
+              "memory_rss_mb": 109.09,
+              "gc_next_mb": 22.45,
+              "goroutines": 38,
+              "mock_docs": 1427456,
+              "mock_batches": 1394,
+              "mock_bytes_mb": 771.33,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 71190.0,
+              "output_acked": 1857536,
+              "output_failed": 0,
+              "output_batches": 1814,
+              "memory_total_mb": 4407.05,
+              "cpu_ticks": 26080,
+              "bytes_per_event": 567,
+              "alloc_per_event": 3238,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 790778,
+                  "mem_bytes": 13100624,
+                  "rss_bytes": 113528832
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 1147298,
+                  "mem_bytes": 11724008,
+                  "rss_bytes": 113762304
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 1500841,
+                  "mem_bytes": 17978360,
+                  "rss_bytes": 113598464
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 1857987,
+                  "mem_bytes": 19480008,
+                  "rss_bytes": 114393088
+                }
+              ]
+            }
+          ],
+          "pr_runs": [
+            {
+              "label": "pr",
+              "eps": 67940,
+              "events": 1358805,
+              "measure_sec": 20,
+              "memory_alloc_mb": 12.31,
+              "memory_rss_mb": 108.07,
+              "gc_next_mb": 21.88,
+              "goroutines": 38,
+              "mock_docs": 1358848,
+              "mock_batches": 1327,
+              "mock_bytes_mb": 734.24,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 67900.0,
+              "output_acked": 1794048,
+              "output_failed": 0,
+              "output_batches": 1752,
+              "memory_total_mb": 4257.57,
+              "cpu_ticks": 26040,
+              "bytes_per_event": 567,
+              "alloc_per_event": 3286,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 763482,
+                  "mem_bytes": 12639248,
+                  "rss_bytes": 112844800
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 1077075,
+                  "mem_bytes": 21874208,
+                  "rss_bytes": 113025024
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 1434113,
+                  "mem_bytes": 16657960,
+                  "rss_bytes": 113741824
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 1794807,
+                  "mem_bytes": 12609864,
+                  "rss_bytes": 113315840
+                }
+              ]
+            },
+            {
+              "label": "pr",
+              "eps": 71373,
+              "events": 1427474,
+              "measure_sec": 20,
+              "memory_alloc_mb": 18.19,
+              "memory_rss_mb": 107.66,
+              "gc_next_mb": 22.73,
+              "goroutines": 39,
+              "mock_docs": 1427456,
+              "mock_batches": 1394,
+              "mock_bytes_mb": 771.33,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 71321.0,
+              "output_acked": 1854464,
+              "output_failed": 0,
+              "output_batches": 1811,
+              "memory_total_mb": 4399.21,
+              "cpu_ticks": 26050,
+              "bytes_per_event": 567,
+              "alloc_per_event": 3232,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 786644,
+                  "mem_bytes": 11853536,
+                  "rss_bytes": 111616000
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 1142040,
+                  "mem_bytes": 18874896,
+                  "rss_bytes": 111210496
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 1496763,
+                  "mem_bytes": 14254968,
+                  "rss_bytes": 114196480
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 1854903,
+                  "mem_bytes": 18367504,
+                  "rss_bytes": 112885760
+                }
+              ]
+            },
+            {
+              "label": "pr",
+              "eps": 71730,
+              "events": 1434614,
+              "measure_sec": 20,
+              "memory_alloc_mb": 19.28,
+              "memory_rss_mb": 108.1,
+              "gc_next_mb": 21.23,
+              "goroutines": 38,
+              "mock_docs": 1434624,
+              "mock_batches": 1401,
+              "mock_bytes_mb": 775.2,
+              "mock_avg_batch": 1024.0,
+              "mock_docs_per_sec": 71672.0,
+              "output_acked": 1862656,
+              "output_failed": 0,
+              "output_batches": 1819,
+              "memory_total_mb": 4418.27,
+              "cpu_ticks": 26060,
+              "bytes_per_event": 567,
+              "alloc_per_event": 3229,
+              "samples": [
+                {
+                  "elapsed_sec": 5,
+                  "events": 788780,
+                  "mem_bytes": 19031536,
+                  "rss_bytes": 113905664
+                },
+                {
+                  "elapsed_sec": 10,
+                  "events": 1145112,
+                  "mem_bytes": 16934224,
+                  "rss_bytes": 110460928
+                },
+                {
+                  "elapsed_sec": 15,
+                  "events": 1502882,
+                  "mem_bytes": 21460680,
+                  "rss_bytes": 113168384
+                },
+                {
+                  "elapsed_sec": 20,
+                  "events": 1863140,
+                  "mem_bytes": 19863272,
+                  "rss_bytes": 113340416
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "index_entry": {
+    "id": "23759440646",
+    "date": "2026-03-30T18:02:37Z",
+    "base_ref": "main",
+    "pr_ref": "claude-optimize-add-field-processors-ep8Ok",
+    "base_repo": "elastic/beats",
+    "pr_repo": "strawgate/beats",
+    "scenarios": [
+      "full-agent-dissect",
+      "full-agent-rename-only",
+      "passthrough"
+    ],
+    "cpus": [
+      "1.0"
+    ]
+  }
+}
