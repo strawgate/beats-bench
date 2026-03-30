@@ -1,0 +1,318 @@
+name: Filebeat Pipeline Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: "Base ref (branch, tag, or commit SHA) — typically elastic/beats main"
+        required: true
+        default: "main"
+      pr_ref:
+        description: "PR ref (branch, tag, or commit SHA) — the change to benchmark"
+        required: true
+        default: "main"
+      beats_repo:
+        description: "Beats repo (owner/repo)"
+        required: true
+        default: "elastic/beats"
+      pr_repo:
+        description: "PR repo (owner/repo) — if different from beats_repo"
+        required: false
+        default: ""
+      scenarios:
+        description: "Comma-separated pipeline scenarios (worst-case,with-dissect,mid-case,best-case)"
+        required: true
+        default: "with-dissect,worst-case"
+      cpus:
+        description: "Comma-separated CPU limits for Docker (0.5,1.0)"
+        required: true
+        default: "0.5,1.0"
+      runs_per_scenario:
+        description: "Number of measurement runs per binary per scenario"
+        required: true
+        default: "3"
+      measurement_seconds:
+        description: "Seconds to measure each run"
+        required: true
+        default: "20"
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  # ---------------------------------------------------------------
+  # Build both binaries
+  # ---------------------------------------------------------------
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: [base, pr]
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: false
+
+      - name: Checkout beats
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.variant == 'pr' && (inputs.pr_repo || inputs.beats_repo) || inputs.beats_repo }}
+          ref: ${{ matrix.variant == 'pr' && inputs.pr_ref || inputs.base_ref }}
+          path: beats
+
+      - name: Build filebeat
+        run: |
+          cd beats/x-pack/filebeat
+          CGO_ENABLED=0 GOFLAGS=-mod=mod go build -o ${{ github.workspace }}/filebeat-${{ matrix.variant }} .
+          echo "Build ID: $(go tool buildid ${{ github.workspace }}/filebeat-${{ matrix.variant }} | cut -c1-16)"
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: filebeat-${{ matrix.variant }}
+          path: filebeat-${{ matrix.variant }}
+          retention-days: 1
+
+  # ---------------------------------------------------------------
+  # Build mock-es
+  # ---------------------------------------------------------------
+  build-mock-es:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: false
+      - name: Build mock-es
+        run: |
+          cd mock-es
+          CGO_ENABLED=0 go build -o ${{ github.workspace }}/mock-es .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mock-es
+          path: mock-es
+          retention-days: 1
+
+  # ---------------------------------------------------------------
+  # Benchmark matrix: scenario × cpu
+  # ---------------------------------------------------------------
+  bench:
+    needs: [build, build-mock-es]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: ${{ fromJson(format('["{0}"]', join(fromJson(format('["{0}"]', replace(inputs.scenarios, ',', '","'))), '","'))) }}
+        cpu: ${{ fromJson(format('["{0}"]', join(fromJson(format('["{0}"]', replace(inputs.cpus, ',', '","'))), '","'))) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: bin
+
+      - name: Prepare
+        run: |
+          chmod +x bin/filebeat-base/filebeat-base bin/filebeat-pr/filebeat-pr bin/mock-es/mock-es
+          sudo cp bin/mock-es/mock-es /usr/local/bin/mock-es
+
+          # Copy pipeline config and fix ownership for filebeat
+          sudo cp pipelines/${{ matrix.scenario }}.yml /tmp/fb-config.yml
+          sudo chown root:root /tmp/fb-config.yml
+
+          docker network create bench-net 2>/dev/null || true
+
+      - name: Run benchmarks
+        id: bench
+        run: |
+          RUNS=${{ inputs.runs_per_scenario }}
+          MEASURE=${{ inputs.measurement_seconds }}
+          CPUS=${{ matrix.cpu }}
+
+          run_one() {
+            local LABEL=$1
+            local BIN=bin/filebeat-${LABEL}/filebeat-${LABEL}
+
+            docker rm -f fb-bench mock-es-c >/dev/null 2>&1 || true
+            sleep 1
+
+            docker run -d --name mock-es-c --network bench-net \
+              -v /usr/local/bin/mock-es:/mock-es:ro --entrypoint /mock-es \
+              debian:bookworm-slim >/dev/null 2>&1
+            sleep 2
+
+            docker run -d --name fb-bench --network bench-net \
+              --cpus=$CPUS -p 5066:5066 \
+              -v $(pwd)/${BIN}:/filebeat:ro \
+              -v /tmp/fb-config.yml:/filebeat.yml:ro \
+              --entrypoint /filebeat debian:bookworm-slim \
+              -e -c /filebeat.yml \
+              -E "output.elasticsearch.hosts=[\"mock-es-c:9200\"]" \
+              -E http.host=0.0.0.0 >/dev/null 2>&1
+
+            for i in $(seq 1 30); do
+              curl -sf http://localhost:5066/stats >/dev/null 2>&1 && break
+              sleep 1
+            done
+            sleep 5
+
+            local S=$(curl -s http://localhost:5066/stats | python3 -c "import sys,json; print(json.load(sys.stdin)['libbeat']['pipeline']['events']['total'])")
+            sleep $MEASURE
+            local E=$(curl -s http://localhost:5066/stats | python3 -c "import sys,json; print(json.load(sys.stdin)['libbeat']['pipeline']['events']['total'])")
+
+            docker rm -f fb-bench mock-es-c >/dev/null 2>&1
+            sleep 1
+            echo $(( (E - S) / MEASURE ))
+          }
+
+          echo "scenario=${{ matrix.scenario }}" >> results.txt
+          echo "cpu=$CPUS" >> results.txt
+
+          # Warmup
+          run_one base >/dev/null
+
+          # Alternating runs
+          BASE_RESULTS=""
+          PR_RESULTS=""
+          for i in $(seq 1 $RUNS); do
+            if [ $((i % 2)) -eq 1 ]; then
+              B=$(run_one base)
+              P=$(run_one pr)
+            else
+              P=$(run_one pr)
+              B=$(run_one base)
+            fi
+            BASE_RESULTS="${BASE_RESULTS}${B},"
+            PR_RESULTS="${PR_RESULTS}${P},"
+            echo "  Run $i: base=$B pr=$P"
+          done
+
+          echo "base_eps=${BASE_RESULTS%,}" >> results.txt
+          echo "pr_eps=${PR_RESULTS%,}" >> results.txt
+
+          # Collect profiles on last run
+          run_one base >/dev/null &
+          sleep 15
+          curl -s "http://localhost:5066/debug/pprof/profile?seconds=20" -o base-cpu.pprof || true
+          curl -s "http://localhost:5066/debug/pprof/allocs" -o base-allocs.pprof || true
+          docker rm -f fb-bench mock-es-c >/dev/null 2>&1; sleep 1
+
+          run_one pr >/dev/null &
+          sleep 15
+          curl -s "http://localhost:5066/debug/pprof/profile?seconds=20" -o pr-cpu.pprof || true
+          curl -s "http://localhost:5066/debug/pprof/allocs" -o pr-allocs.pprof || true
+          docker rm -f fb-bench mock-es-c >/dev/null 2>&1
+
+          cat results.txt
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ matrix.scenario }}-${{ matrix.cpu }}cpu
+          path: |
+            results.txt
+            *.pprof
+          retention-days: 30
+
+  # ---------------------------------------------------------------
+  # Summarize all results
+  # ---------------------------------------------------------------
+  summarize:
+    needs: bench
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: results-*
+          path: all-results
+
+      - name: Generate summary
+        id: summary
+        run: |
+          python3 << 'PYEOF'
+          import os, json
+
+          results = []
+          for d in sorted(os.listdir("all-results")):
+            path = f"all-results/{d}/results.txt"
+            if not os.path.exists(path):
+              continue
+            data = {}
+            for line in open(path):
+              if "=" in line:
+                k, v = line.strip().split("=", 1)
+                data[k] = v
+            if "scenario" in data and "base_eps" in data:
+              results.append(data)
+
+          # Build markdown table
+          lines = []
+          lines.append("## Filebeat Pipeline Benchmark Results\n")
+          lines.append(f"**Base:** `${{ inputs.base_ref }}` @ `${{ inputs.beats_repo }}`")
+          lines.append(f"**PR:** `${{ inputs.pr_ref }}` @ `${{ inputs.pr_repo or inputs.beats_repo }}`")
+          lines.append(f"**Runs per scenario:** ${{ inputs.runs_per_scenario }}")
+          lines.append(f"**Measurement window:** ${{ inputs.measurement_seconds }}s\n")
+          lines.append("| Scenario | CPU | Base EPS | PR EPS | Change |")
+          lines.append("|---|---|---|---|---|")
+
+          gh_bench = []
+          for r in results:
+            base_vals = [int(x) for x in r["base_eps"].split(",")]
+            pr_vals = [int(x) for x in r["pr_eps"].split(",")]
+            base_avg = sum(base_vals) // len(base_vals)
+            pr_avg = sum(pr_vals) // len(pr_vals)
+            delta = (pr_avg - base_avg) * 100 // base_avg if base_avg > 0 else 0
+            sign = "+" if delta >= 0 else ""
+            scenario = r["scenario"]
+            cpu = r["cpu"]
+            lines.append(f"| {scenario} | {cpu} | {base_avg:,} | {pr_avg:,} | **{sign}{delta}%** |")
+            gh_bench.append({
+              "name": f"{scenario} ({cpu} CPU)",
+              "unit": "events/sec",
+              "value": pr_avg,
+              "extra": f"base={base_avg} delta={sign}{delta}%"
+            })
+
+          lines.append(f"\n*Profiles available as workflow artifacts.*")
+
+          md = "\n".join(lines)
+          print(md)
+
+          with open("summary.md", "w") as f:
+            f.write(md)
+
+          with open("gh-bench.json", "w") as f:
+            json.dump(gh_bench, f, indent=2)
+          PYEOF
+
+      - name: Post summary to job
+        run: cat summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Publish to benchmark dashboard
+        uses: benchmark-action/github-action-benchmark@v1
+        if: always()
+        continue-on-error: true
+        with:
+          name: Filebeat Pipeline Benchmarks
+          tool: customBiggerIsBetter
+          output-file-path: gh-bench.json
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          auto-push: true
+
+      - name: Upload summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-summary
+          path: |
+            summary.md
+            gh-bench.json
+          retention-days: 90
