@@ -1,1 +1,19 @@
-{"runs":[]}
+{
+  "runs": [
+    {
+      "id": "23760935157",
+      "date": "2026-03-30T18:35:27Z",
+      "base_ref": "main",
+      "pr_ref": "claude-optimize-add-field-processors-ep8Ok",
+      "base_repo": "elastic/beats",
+      "pr_repo": "strawgate/beats",
+      "scenarios": [
+        "full-agent-dissect",
+        "passthrough"
+      ],
+      "cpus": [
+        "1.0"
+      ]
+    }
+  ]
+}
