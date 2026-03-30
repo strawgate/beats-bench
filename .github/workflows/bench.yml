@@ -148,7 +148,7 @@ jobs:
           MEASURE=${{ inputs.measurement_seconds }}
           CPUS=${{ matrix.cpu }}
 
-          run_one() {
+          start_run() {
             local LABEL=$1
             local BIN=bin/filebeat-${LABEL}/filebeat-${LABEL}
 
@@ -156,6 +156,7 @@ jobs:
             sleep 1
 
             docker run -d --name mock-es-c --network bench-net \
+              -p 9200:9200 \
               -v /usr/local/bin/mock-es:/mock-es:ro --entrypoint /mock-es \
               debian:bookworm-slim >/dev/null 2>&1
             sleep 2
@@ -174,32 +175,52 @@ jobs:
               sleep 1
             done
             sleep 5
+          }
 
+          measure_eps() {
             local S=$(curl -s http://localhost:5066/stats | python3 -c "import sys,json; print(json.load(sys.stdin)['libbeat']['pipeline']['events']['total'])")
             sleep $MEASURE
             local E=$(curl -s http://localhost:5066/stats | python3 -c "import sys,json; print(json.load(sys.stdin)['libbeat']['pipeline']['events']['total'])")
-
-            docker rm -f fb-bench mock-es-c >/dev/null 2>&1
-            sleep 1
             echo $(( (E - S) / MEASURE ))
+          }
+
+          collect_stats() {
+            local LABEL=$1
+            curl -s http://localhost:5066/stats > ${LABEL}-fb-stats.json 2>/dev/null || true
+            curl -s http://localhost:9200/_mock/stats > ${LABEL}-mock-stats.json 2>/dev/null || true
+          }
+
+          collect_profiles() {
+            local LABEL=$1
+            curl -s "http://localhost:5066/debug/pprof/profile?seconds=$MEASURE" -o ${LABEL}-cpu.pprof &
+            local PROF_PID=$!
+            sleep $((MEASURE + 2))
+            wait $PROF_PID 2>/dev/null || true
+            curl -s "http://localhost:5066/debug/pprof/allocs" -o ${LABEL}-allocs.pprof || true
+            curl -s "http://localhost:5066/debug/pprof/heap" -o ${LABEL}-heap.pprof || true
+          }
+
+          stop_run() {
+            docker rm -f fb-bench mock-es-c >/dev/null 2>&1 || true
+            sleep 1
           }
 
           echo "scenario=${{ matrix.scenario }}" >> results.txt
           echo "cpu=$CPUS" >> results.txt
 
           # Warmup
-          run_one base >/dev/null
+          start_run base; measure_eps >/dev/null; stop_run
 
-          # Alternating runs
+          # Alternating EPS measurement runs
           BASE_RESULTS=""
           PR_RESULTS=""
           for i in $(seq 1 $RUNS); do
             if [ $((i % 2)) -eq 1 ]; then
-              B=$(run_one base)
-              P=$(run_one pr)
+              start_run base; B=$(measure_eps); stop_run
+              start_run pr;   P=$(measure_eps); stop_run
             else
-              P=$(run_one pr)
-              B=$(run_one base)
+              start_run pr;   P=$(measure_eps); stop_run
+              start_run base; B=$(measure_eps); stop_run
             fi
             BASE_RESULTS="${BASE_RESULTS}${B},"
             PR_RESULTS="${PR_RESULTS}${P},"
@@ -209,6 +230,16 @@ jobs:
           echo "base_eps=${BASE_RESULTS%,}" >> results.txt
           echo "pr_eps=${PR_RESULTS%,}" >> results.txt
 
+          # Final run: collect detailed stats and profiles for each variant
+          for LABEL in base pr; do
+            echo "Collecting stats and profiles for $LABEL..."
+            start_run $LABEL
+            collect_stats $LABEL
+            collect_profiles $LABEL
+            collect_stats ${LABEL}-final
+            stop_run
+          done
+
           cat results.txt
 
       - name: Upload results
@@ -217,6 +248,8 @@ jobs:
           name: results-${{ matrix.scenario }}-${{ matrix.cpu }}cpu
           path: |
             results.txt
+            *-fb-stats.json
+            *-mock-stats.json
             *.pprof
           retention-days: 30
 
@@ -235,34 +268,51 @@ jobs:
           pattern: results-*
           path: all-results
 
+      - name: Set up Go (for pprof)
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: false
+
       - name: Generate summary
         id: summary
         run: |
           python3 << 'PYEOF'
-          import os, json
+          import os, json, glob, statistics
 
           results = []
           for d in sorted(os.listdir("all-results")):
             path = f"all-results/{d}/results.txt"
             if not os.path.exists(path):
               continue
-            data = {}
+            data = {"dir": d}
             for line in open(path):
               if "=" in line:
                 k, v = line.strip().split("=", 1)
                 data[k] = v
+            # Load stats files if present
+            for label in ["base", "pr", "base-final", "pr-final"]:
+              fb = f"all-results/{d}/{label}-fb-stats.json"
+              mock = f"all-results/{d}/{label}-mock-stats.json"
+              if os.path.exists(fb):
+                try: data[f"{label}_fb"] = json.load(open(fb))
+                except: pass
+              if os.path.exists(mock):
+                try: data[f"{label}_mock"] = json.load(open(mock))
+                except: pass
             if "scenario" in data and "base_eps" in data:
               results.append(data)
 
-          # Build markdown table
           lines = []
           lines.append("## Filebeat Pipeline Benchmark Results\n")
           lines.append(f"**Base:** `${{ inputs.base_ref }}` @ `${{ inputs.beats_repo }}`")
           lines.append(f"**PR:** `${{ inputs.pr_ref }}` @ `${{ inputs.pr_repo || inputs.beats_repo }}`")
-          lines.append(f"**Runs per scenario:** ${{ inputs.runs_per_scenario }}")
-          lines.append(f"**Measurement window:** ${{ inputs.measurement_seconds }}s\n")
-          lines.append("| Scenario | CPU | Base EPS | PR EPS | Change |")
-          lines.append("|---|---|---|---|---|")
+          lines.append(f"**Runs per scenario:** ${{ inputs.runs_per_scenario }}, **Measurement:** ${{ inputs.measurement_seconds }}s per run\n")
+
+          # EPS table
+          lines.append("### Throughput (events/sec)\n")
+          lines.append("| Scenario | CPU | Base EPS | PR EPS | Δ |")
+          lines.append("|---|---|---:|---:|---:|")
 
           gh_bench = []
           for r in results:
@@ -274,7 +324,9 @@ jobs:
             sign = "+" if delta >= 0 else ""
             scenario = r["scenario"]
             cpu = r["cpu"]
-            lines.append(f"| {scenario} | {cpu} | {base_avg:,} | {pr_avg:,} | **{sign}{delta}%** |")
+            base_str = f"{base_avg:,} ({'|'.join(str(v) for v in base_vals)})"
+            pr_str = f"{pr_avg:,} ({'|'.join(str(v) for v in pr_vals)})"
+            lines.append(f"| {scenario} | {cpu} | {base_str} | {pr_str} | **{sign}{delta}%** |")
             gh_bench.append({
               "name": f"{scenario} ({cpu} CPU)",
               "unit": "events/sec",
@@ -282,14 +334,50 @@ jobs:
               "extra": f"base={base_avg} delta={sign}{delta}%"
             })
 
-          lines.append(f"\n*Profiles available as workflow artifacts.*")
+          # Resource usage table (from filebeat stats)
+          lines.append("\n### Resource usage (from final profile run)\n")
+          lines.append("| Scenario | CPU | Variant | Alloc (MB) | RSS (MB) | GC next (MB) | Goroutines |")
+          lines.append("|---|---|---|---:|---:|---:|---:|")
+          for r in results:
+            scenario = r["scenario"]
+            cpu = r["cpu"]
+            for label in ["base", "pr"]:
+              fb = r.get(f"{label}-final_fb", r.get(f"{label}_fb", {}))
+              if not fb:
+                continue
+              mem = fb.get("beat", {}).get("memstats", {})
+              rt = fb.get("beat", {}).get("runtime", {})
+              alloc_mb = mem.get("memory_alloc", 0) / 1024 / 1024
+              rss_mb = mem.get("rss", 0) / 1024 / 1024
+              gc_mb = mem.get("gc_next", 0) / 1024 / 1024
+              goroutines = rt.get("goroutines", 0)
+              lines.append(f"| {scenario} | {cpu} | {label} | {alloc_mb:.1f} | {rss_mb:.1f} | {gc_mb:.1f} | {goroutines} |")
+
+          # Mock-ES stats
+          lines.append("\n### Mock-ES sink stats (from final profile run)\n")
+          lines.append("| Scenario | CPU | Variant | Docs | Batches | Avg batch | Bytes (MB) | Docs/sec |")
+          lines.append("|---|---|---|---:|---:|---:|---:|---:|")
+          for r in results:
+            scenario = r["scenario"]
+            cpu = r["cpu"]
+            for label in ["base", "pr"]:
+              mock = r.get(f"{label}-final_mock", r.get(f"{label}_mock", {}))
+              if not mock:
+                continue
+              docs = mock.get("docs_ingested", 0)
+              batches = mock.get("batches", 0)
+              avg_batch = mock.get("avg_batch_size", 0)
+              bytes_mb = mock.get("bytes_received", 0) / 1024 / 1024
+              dps = mock.get("docs_per_sec", 0)
+              lines.append(f"| {scenario} | {cpu} | {label} | {docs:,} | {batches:,} | {avg_batch:.0f} | {bytes_mb:.0f} | {dps:,.0f} |")
+
+          lines.append("\n\n*CPU/alloc/heap profiles available as workflow artifacts.*")
 
           md = "\n".join(lines)
           print(md)
 
           with open("summary.md", "w") as f:
             f.write(md)
-
           with open("gh-bench.json", "w") as f:
             json.dump(gh_bench, f, indent=2)
           PYEOF
