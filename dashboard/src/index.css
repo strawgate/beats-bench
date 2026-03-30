@@ -407,6 +407,11 @@ td.num, th.num {
   color: var(--pr-color);
 }
 
+/* PR value coloring */
+.pr-value-positive { color: var(--pr-color); font-weight: 600; }
+.pr-value-negative { color: #dc2626; font-weight: 600; }
+.pr-value-neutral { color: var(--text-secondary); }
+
 /* Responsive */
 @media (max-width: 640px) {
   .container { padding: 16px 12px; }

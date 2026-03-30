@@ -1,0 +1,42 @@
+{
+  "passthrough": {
+    "name": "Baseline (No Processors)",
+    "description": "Raw filebeat throughput — output ceiling with no processing",
+    "sort": 0
+  },
+  "enrichment-only": {
+    "name": "Enrichment Only",
+    "description": "6× add_fields + add_host_metadata — no clone-affected processors",
+    "sort": 1
+  },
+  "full-agent-rename-only": {
+    "name": "Full Pipeline (Rename)",
+    "description": "rename + 6× add_fields + add_host_metadata",
+    "sort": 2
+  },
+  "full-agent-dissect": {
+    "name": "Full Pipeline (Dissect + Rename)",
+    "description": "rename + dissect + 6× add_fields + add_host_metadata — realistic worst case",
+    "sort": 3
+  },
+  "filestream-dissect": {
+    "name": "File Input (Dissect)",
+    "description": "filestream → rename + dissect + add_fields + add_host_metadata",
+    "sort": 4
+  },
+  "tcp-syslog-dissect": {
+    "name": "TCP Syslog (Dissect)",
+    "description": "TCP :9000 → rename + dissect + add_fields + add_host_metadata",
+    "sort": 5
+  },
+  "udp-syslog-dissect": {
+    "name": "UDP Syslog (Dissect)",
+    "description": "UDP :9000 → rename + dissect + add_fields + add_host_metadata",
+    "sort": 6
+  },
+  "tcp-cef-rename": {
+    "name": "TCP CEF (Security)",
+    "description": "TCP :9000 → rename + copy_fields + 6× add_fields + add_host_metadata",
+    "sort": 7
+  }
+}

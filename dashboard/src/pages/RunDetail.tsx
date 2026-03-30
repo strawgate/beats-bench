@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'preact/hooks';
 import '../components/ChartSetup';
-import { EPSBarChart } from '../components/EPSBarChart';
 import { TimeSeriesChart } from '../components/TimeSeriesChart';
 import { fetchRun } from '../api';
 import { navigate } from '../router';
-import { formatDate, deltaClass, formatDelta, formatNum, avg } from '../utils';
+import { formatDate, deltaClass, formatDelta, formatNum, avg, scenarioName, scenarioSort } from '../utils';
 import type { RunDetailData, ScenarioCpuMetrics, RunEntry, Sample } from '../types';
 
 interface Props {
@@ -121,15 +120,19 @@ export function RunDetail({ runId }: Props) {
           >
             All
           </button>
-          {scenarioKeys.map((key) => (
-            <button
-              key={key}
-              class={`scenario-tab ${activeFilter === key ? 'active' : ''}`}
-              onClick={() => setActiveFilter(key)}
-            >
-              {key}
-            </button>
-          ))}
+          {scenarioKeys.map((key) => {
+            // key is "scenario (cpu CPU)" — extract scenario for friendly name
+            const scenarioId = key.replace(/ \(.*$/, '');
+            return (
+              <button
+                key={key}
+                class={`scenario-tab ${activeFilter === key ? 'active' : ''}`}
+                onClick={() => setActiveFilter(key)}
+              >
+                {scenarioName(scenarioId)} ({key.match(/\(([^)]+)\)/)?.[1] || ''})
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -157,7 +160,7 @@ export function RunDetail({ runId }: Props) {
             >
               <div class="scenario-card-header">
                 <span class="scenario-card-title">
-                  {f.scenario} ({f.cpu} CPU)
+                  {scenarioName(f.scenario)} ({f.cpu} CPU)
                 </span>
                 <div class="scenario-card-stats">
                   <div class="scenario-stat">
@@ -168,13 +171,13 @@ export function RunDetail({ runId }: Props) {
                   </div>
                   <div class="scenario-stat">
                     <div class="scenario-stat-label">PR EPS</div>
-                    <div class="scenario-stat-value" style={{ color: 'var(--pr-color)' }}>
+                    <div class={`scenario-stat-value ${delta > 2 ? 'pr-value-positive' : delta < -2 ? 'pr-value-negative' : 'pr-value-neutral'}`}>
                       {prAvg.toLocaleString()}
                     </div>
                   </div>
                   <div class="scenario-stat">
                     <div class="scenario-stat-label">Delta</div>
-                    <div class={`scenario-stat-value ${deltaClass(delta)}`}>
+                    <div class={`scenario-stat-value ${deltaClass(delta)}`} style={{ fontSize: '18px', fontWeight: 700 }}>
                       {formatDelta(delta)}
                     </div>
                   </div>
@@ -197,18 +200,6 @@ export function RunDetail({ runId }: Props) {
           </div>
         );
       })}
-
-      {/* EPS comparison chart */}
-      {allFiltered.length > 0 && (
-        <div class="card">
-          <h2>EPS Comparison</h2>
-          <EPSBarChart
-            labels={allFiltered.map((f) => `${f.scenario}\n(${f.cpu} CPU)`)}
-            baseAvgs={allFiltered.map((f) => Math.round(avg(f.metrics.base_eps)))}
-            prAvgs={allFiltered.map((f) => Math.round(avg(f.metrics.pr_eps)))}
-          />
-        </div>
-      )}
 
       {/* Profiles link */}
       <div class="card">
@@ -459,5 +450,6 @@ function getFilteredScenarios(
       result.push({ scenario, cpu, metrics });
     }
   }
+  result.sort((a, b) => scenarioSort(a.scenario, b.scenario));
   return result;
 }

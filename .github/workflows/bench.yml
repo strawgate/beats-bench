@@ -36,7 +36,7 @@ on:
       measurement_seconds:
         description: "Seconds to measure each run"
         required: true
-        default: "20"
+        default: "60"
       pr_number:
         description: "PR number being benchmarked (optional)"
         required: false
@@ -267,6 +267,7 @@ jobs:
           cp -r _site/data .
           git add data/
           git commit -m "Add benchmark data for run ${{ github.run_id }}" || true
+          git pull --rebase origin bench-data 2>/dev/null || true
           git push origin bench-data
 
       - name: Upload summary

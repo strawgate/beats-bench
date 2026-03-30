@@ -3,7 +3,7 @@ import '../components/ChartSetup';
 import { SparklineChart } from '../components/SparklineChart';
 import { fetchIndex } from '../api';
 import { navigate } from '../router';
-import { formatDate, shortRef, deltaClass, formatDelta } from '../utils';
+import { formatDate, shortRef, deltaClass, formatDelta, scenarioName } from '../utils';
 import type { IndexData, IndexRun, SummaryEntry } from '../types';
 
 export function Overview() {
@@ -110,7 +110,7 @@ function PRSection({ groups }: { groups: Map<number, IndexRun[]> }) {
         const summary = latest.summary || {};
         for (const [scenario, cpuData] of Object.entries(summary)) {
           for (const [cpu, stats] of Object.entries(cpuData)) {
-            deltas.push({ key: `${scenario}/${cpu}`, entry: stats as SummaryEntry });
+            deltas.push({ key: `${scenarioName(scenario)}/${cpu}`, entry: stats as SummaryEntry });
           }
         }
 
@@ -172,7 +172,7 @@ function AllRunsSection({ runs }: { runs: IndexRun[] }) {
         const summary = run.summary || {};
         for (const [scenario, cpuData] of Object.entries(summary)) {
           for (const [cpu, stats] of Object.entries(cpuData)) {
-            deltas.push({ key: `${scenario}/${cpu}`, delta: (stats as SummaryEntry).delta_pct });
+            deltas.push({ key: `${scenarioName(scenario)}/${cpu}`, delta: (stats as SummaryEntry).delta_pct });
           }
         }
 
@@ -207,15 +207,11 @@ function AllRunsSection({ runs }: { runs: IndexRun[] }) {
                 </div>
               )}
             </div>
-            <div class="run-tags">
-              {isNightly && <span class="tag tag-nightly">nightly</span>}
-              {(run.scenarios || []).map((s) => (
-                <span class="tag" key={s}>{s}</span>
-              ))}
-              {(run.cpus || []).map((c) => (
-                <span class="tag" key={c}>{c} CPU</span>
-              ))}
-            </div>
+            {isNightly && (
+              <div class="run-tags">
+                <span class="tag tag-nightly">nightly</span>
+              </div>
+            )}
           </a>
         );
       })}
