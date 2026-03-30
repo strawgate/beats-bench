@@ -6,9 +6,9 @@ export default defineConfig({
   base: '/beats-bench/',
   server: {
     proxy: {
-      '/beats-bench/data': {
-        target: 'http://localhost:4173',
-        rewrite: (path) => path.replace('/beats-bench/data', '/data'),
+      '/data': {
+        target: 'https://raw.githubusercontent.com/strawgate/beats-bench/bench-data',
+        changeOrigin: true,
       },
     },
   },

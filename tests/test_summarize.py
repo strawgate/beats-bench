@@ -117,7 +117,7 @@ class TestGenerateSummary:
 
 
 class TestBuildSite:
-    def test_site_contains_expected_files(self, sample_results_dir, tmp_path):
+    def test_site_contains_data_files(self, sample_results_dir, tmp_path):
         results = load_results(str(sample_results_dir))
         args = _make_args()
         dashboard = generate_dashboard_data(results, args, "12345")
@@ -126,12 +126,8 @@ class TestBuildSite:
         build_site(output_dir, "", dashboard)
 
         site = Path(output_dir)
-        assert (site / "index.html").exists()
-        assert (site / "style.css").exists()
         assert (site / "data" / "index.json").exists()
         assert (site / "data" / "runs" / "12345.json").exists()
-        # Run page at run/{id}/index.html
-        assert (site / "run" / "12345" / "index.html").exists()
 
         # Verify index.json structure
         idx = json.loads((site / "data" / "index.json").read_text())
@@ -197,10 +193,10 @@ class TestBuildSite:
         dashboard = generate_dashboard_data(results, args, "12345")
 
         assert dashboard["run_data"]["type"] == "pr"
-        assert dashboard["run_data"]["pr_number"] == "42"
+        assert dashboard["run_data"]["pr_number"] == 42
         assert dashboard["run_data"]["commit_sha"] == "abc123"
         assert dashboard["index_entry"]["type"] == "pr"
-        assert dashboard["index_entry"]["pr_number"] == "42"
+        assert dashboard["index_entry"]["pr_number"] == 42
 
     def test_dashboard_includes_summary(self, sample_results_dir):
         results = load_results(str(sample_results_dir))
@@ -215,60 +211,20 @@ class TestBuildSite:
         assert s["pr_avg"] == 7500
         assert s["delta_pct"] == 7.1
 
-    def test_nightly_run_no_pr_page(self, sample_results_dir, tmp_path):
-        """Nightly runs (no pr_number) should not generate a pr/ directory."""
-        results = load_results(str(sample_results_dir))
-        args = _make_args(run_type="nightly", pr_number="")
-        dashboard = generate_dashboard_data(results, args, "55555")
-
-        output_dir = str(tmp_path / "_site")
-        build_site(output_dir, "", dashboard)
-
-        site = Path(output_dir)
-        assert not (site / "pr").exists()
-        assert (site / "run" / "55555" / "index.html").exists()
-
-    def test_pr_page_generated(self, sample_results_dir, tmp_path):
-        """When pr_number is set, a pr/{N}/index.html should be generated."""
+    def test_pr_number_stored_as_int(self, sample_results_dir):
+        """pr_number should be stored as int (not string) for dashboard compat."""
         results = load_results(str(sample_results_dir))
         args = _make_args(pr_number="42", run_type="pr")
-        dashboard = generate_dashboard_data(results, args, "77777")
-
-        output_dir = str(tmp_path / "_site")
-        build_site(output_dir, "", dashboard)
-
-        site = Path(output_dir)
-        assert (site / "pr" / "42" / "index.html").exists()
-        assert (site / "run" / "77777" / "index.html").exists()
-
-        # PR page should contain the page data
-        pr_html = (site / "pr" / "42" / "index.html").read_text()
-        assert '"pr_number": "42"' in pr_html
-
-    def test_index_html_has_page_data(self, sample_results_dir, tmp_path):
-        results = load_results(str(sample_results_dir))
-        args = _make_args()
         dashboard = generate_dashboard_data(results, args, "12345")
 
-        output_dir = str(tmp_path / "_site")
-        build_site(output_dir, "", dashboard)
+        assert dashboard["run_data"]["pr_number"] == 42
+        assert dashboard["index_entry"]["pr_number"] == 42
 
-        site = Path(output_dir)
-        index_html = (site / "index.html").read_text()
-        assert '<script id="page-data" type="application/json">' in index_html
-        # Should NOT contain the placeholder
-        assert "__PAGE_DATA__" not in index_html
-
-    def test_run_html_has_page_data(self, sample_results_dir, tmp_path):
+    def test_empty_pr_number_stored_as_none(self, sample_results_dir):
+        """Empty pr_number should be None, not empty string."""
         results = load_results(str(sample_results_dir))
-        args = _make_args()
+        args = _make_args(pr_number="", run_type="nightly")
         dashboard = generate_dashboard_data(results, args, "12345")
 
-        output_dir = str(tmp_path / "_site")
-        build_site(output_dir, "", dashboard)
-
-        site = Path(output_dir)
-        run_html = (site / "run" / "12345" / "index.html").read_text()
-        assert '<script id="page-data" type="application/json">' in run_html
-        assert "__PAGE_DATA__" not in run_html
-        assert '"run_id": "12345"' in run_html
+        assert dashboard["run_data"]["pr_number"] is None
+        assert dashboard["index_entry"]["pr_number"] is None
