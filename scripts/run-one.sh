@@ -80,9 +80,22 @@ curl -sf -XPOST http://localhost:9200/_mock/reset >/dev/null 2>&1 || true
 # Capture baseline allocs profile (for delta computation later)
 curl -s http://localhost:5066/debug/pprof/allocs -o /dev/null 2>/dev/null || true
 
-# ---------- measure ----------
+# ---------- measure with periodic sampling ----------
 START_EVENTS=$(curl -s http://localhost:5066/stats | json_field "['libbeat']['pipeline']['events']['total']")
-sleep "${MEASURE}"
+
+# Sample every 5 seconds during measurement window for time-series data
+SAMPLES_FILE=$(mktemp)
+SAMPLE_INTERVAL=5
+ELAPSED=0
+while [ "$ELAPSED" -lt "$MEASURE" ]; do
+  sleep "$SAMPLE_INTERVAL"
+  ELAPSED=$((ELAPSED + SAMPLE_INTERVAL))
+  SAMPLE_EVENTS=$(curl -s http://localhost:5066/stats | json_field "['libbeat']['pipeline']['events']['total']" || echo 0)
+  SAMPLE_MEM=$(curl -s http://localhost:5066/stats | json_field "['beat']['memstats']['memory_alloc']" || echo 0)
+  SAMPLE_RSS=$(curl -s http://localhost:5066/stats | json_field "['beat']['memstats']['rss']" || echo 0)
+  echo "${ELAPSED},${SAMPLE_EVENTS},${SAMPLE_MEM},${SAMPLE_RSS}" >> "$SAMPLES_FILE"
+done
+
 END_EVENTS=$(curl -s http://localhost:5066/stats | json_field "['libbeat']['pipeline']['events']['total']")
 EVENTS=$((END_EVENTS - START_EVENTS))
 EPS=$((EVENTS / MEASURE))
@@ -106,11 +119,20 @@ MOCK_BYTES=$(echo "$MOCK_STATS" | json_field "['bytes_received']" || echo 0)
 MOCK_AVG_BATCH=$(echo "$MOCK_STATS" | json_field "['avg_batch_size']" || echo 0)
 MOCK_DPS=$(echo "$MOCK_STATS" | json_field "['docs_per_sec']" || echo 0)
 
+# ---------- collect additional stats ----------
+MEM_TOTAL=$(echo "$FB_STATS" | json_field "['beat']['memstats']['memory_total']" || echo 0)
+CPU_TOTAL=$(echo "$FB_STATS" | json_field "['beat']['cpu']['total']['ticks']" || echo 0)
+
 # ---------- compute derived values ----------
 MEM_ALLOC_MB=$(python3 -c "print(round(${MEM_ALLOC} / 1048576, 2))")
 MEM_RSS_MB=$(python3 -c "print(round(${MEM_RSS} / 1048576, 2))")
+MEM_TOTAL_MB=$(python3 -c "print(round(${MEM_TOTAL} / 1048576, 2))")
 GC_NEXT_MB=$(python3 -c "print(round(${GC_NEXT} / 1048576, 2))")
 MOCK_BYTES_MB=$(python3 -c "print(round(${MOCK_BYTES} / 1048576, 2))")
+BYTES_PER_EVENT=0
+[ "$EVENTS" -gt 0 ] && BYTES_PER_EVENT=$(python3 -c "print(round(${MOCK_BYTES} / ${EVENTS}, 0))")
+ALLOC_PER_EVENT=0
+[ "$EVENTS" -gt 0 ] && ALLOC_PER_EVENT=$(python3 -c "print(round(${MEM_TOTAL} / ${EVENTS}, 0))")
 
 # ---------- output JSON ----------
 python3 -c "
@@ -132,8 +154,33 @@ print(json.dumps({
     'output_acked': ${OUTPUT_ACKED},
     'output_failed': ${OUTPUT_FAILED},
     'output_batches': ${OUTPUT_BATCHES},
+    'memory_total_mb': ${MEM_TOTAL_MB},
+    'cpu_ticks': ${CPU_TOTAL},
+    'bytes_per_event': ${BYTES_PER_EVENT},
+    'alloc_per_event': ${ALLOC_PER_EVENT},
+    'samples': [],
 }))
+" | python3 -c "
+import json, sys
+result = json.load(sys.stdin)
+# Add time-series samples
+samples = []
+try:
+    for line in open('${SAMPLES_FILE}'):
+        parts = line.strip().split(',')
+        if len(parts) == 4:
+            samples.append({
+                'elapsed_sec': int(parts[0]),
+                'events': int(parts[1]),
+                'mem_bytes': int(parts[2]),
+                'rss_bytes': int(parts[3]),
+            })
+except: pass
+result['samples'] = samples
+print(json.dumps(result))
 "
+
+rm -f "$SAMPLES_FILE"
 
 # ---------- cleanup ----------
 cleanup

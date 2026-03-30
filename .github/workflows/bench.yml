@@ -217,23 +217,38 @@ jobs:
       - name: Post summary to job
         run: cat summary.md >> $GITHUB_STEP_SUMMARY
 
-      - name: Publish to benchmark dashboard
+      - name: Publish throughput dashboard
         uses: benchmark-action/github-action-benchmark@v1
         if: always()
         continue-on-error: true
         with:
-          name: Filebeat Pipeline Benchmarks
+          name: Throughput (higher is better)
           tool: customBiggerIsBetter
-          output-file-path: gh-bench.json
+          output-file-path: gh-bench-bigger.json
           gh-pages-branch: gh-pages
-          benchmark-data-dir-path: dev/bench
+          benchmark-data-dir-path: dev/bench/throughput
           auto-push: true
 
-      - name: Upload summary
+      - name: Publish efficiency dashboard
+        uses: benchmark-action/github-action-benchmark@v1
+        if: always()
+        continue-on-error: true
+        with:
+          name: Efficiency (lower is better)
+          tool: customSmallerIsBetter
+          output-file-path: gh-bench-smaller.json
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench/efficiency
+          auto-push: true
+
+      - name: Upload summary and diffs
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-summary
           path: |
             summary.md
-            gh-bench.json
+            gh-bench-bigger.json
+            gh-bench-smaller.json
+            all-results/**/*-diff.txt
+            all-results/**/*.pprof
           retention-days: 90
