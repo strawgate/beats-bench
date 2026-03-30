@@ -203,6 +203,9 @@ jobs:
   summarize:
     needs: bench
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     permissions:
       contents: write
       pages: write
@@ -277,6 +280,7 @@ jobs:
           path: _site
 
       - name: Deploy to GitHub Pages
+        id: deploy
         uses: actions/deploy-pages@v4
 
       - name: Upload summary and diffs
