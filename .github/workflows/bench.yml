@@ -209,19 +209,6 @@ jobs:
           echo "base_eps=${BASE_RESULTS%,}" >> results.txt
           echo "pr_eps=${PR_RESULTS%,}" >> results.txt
 
-          # Collect profiles on last run
-          run_one base >/dev/null &
-          sleep 15
-          curl -s "http://localhost:5066/debug/pprof/profile?seconds=20" -o base-cpu.pprof || true
-          curl -s "http://localhost:5066/debug/pprof/allocs" -o base-allocs.pprof || true
-          docker rm -f fb-bench mock-es-c >/dev/null 2>&1; sleep 1
-
-          run_one pr >/dev/null &
-          sleep 15
-          curl -s "http://localhost:5066/debug/pprof/profile?seconds=20" -o pr-cpu.pprof || true
-          curl -s "http://localhost:5066/debug/pprof/allocs" -o pr-allocs.pprof || true
-          docker rm -f fb-bench mock-es-c >/dev/null 2>&1
-
           cat results.txt
 
       - name: Upload results
