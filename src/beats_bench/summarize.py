@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from dataclasses import dataclass
+from datetime import UTC
 from pathlib import Path
 
 
@@ -310,6 +312,65 @@ def generate_pprof_diffs(results_dir: str) -> list[str]:
     return diff_commands
 
 
+def generate_dashboard_data(results: list[dict], args: SummarizeArgs, run_id: str) -> dict:
+    """Generate structured JSON for the custom GitHub Pages dashboard.
+
+    Returns a dict suitable for writing to data/runs/{run-id}.json on gh-pages.
+    """
+    from datetime import datetime
+
+    date = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    scenarios: dict = {}
+    scenario_names: list[str] = []
+    cpu_set: set[str] = set()
+
+    for r in results:
+        scenario = r["scenario"]
+        cpu = r["cpu"]
+        if scenario not in scenario_names:
+            scenario_names.append(scenario)
+        cpu_set.add(cpu)
+
+        base_vals = [int(x) for x in r["base_eps"].split(",") if x]
+        pr_vals = [int(x) for x in r["pr_eps"].split(",") if x]
+
+        base_runs_raw = r.get("base_runs", [])
+        pr_runs_raw = r.get("pr_runs", [])
+
+        if scenario not in scenarios:
+            scenarios[scenario] = {}
+        scenarios[scenario][cpu] = {
+            "base_eps": base_vals,
+            "pr_eps": pr_vals,
+            "base_runs": base_runs_raw,
+            "pr_runs": pr_runs_raw,
+        }
+
+    run_data = {
+        "id": run_id,
+        "date": date,
+        "base_ref": args.base_ref,
+        "pr_ref": args.pr_ref,
+        "base_repo": args.base_repo,
+        "pr_repo": args.pr_repo,
+        "scenarios": scenarios,
+    }
+
+    index_entry = {
+        "id": run_id,
+        "date": date,
+        "base_ref": args.base_ref,
+        "pr_ref": args.pr_ref,
+        "base_repo": args.base_repo,
+        "pr_repo": args.pr_repo,
+        "scenarios": scenario_names,
+        "cpus": sorted(cpu_set),
+    }
+
+    return {"run_data": run_data, "index_entry": index_entry}
+
+
 def summarize(args: SummarizeArgs) -> tuple[str, list[dict]]:
     """Main summarize entry point. Returns (markdown, gh_bench)."""
     results = load_results(args.results_dir)
@@ -331,12 +392,21 @@ def summarize(args: SummarizeArgs) -> tuple[str, list[dict]]:
     with open("gh-bench.json", "w") as f:
         json.dump(bigger, f, indent=2)
 
+    # Generate custom dashboard data
+    run_id = os.environ.get("GITHUB_RUN_ID", "local")
+    dashboard = generate_dashboard_data(results, args, run_id)
+    with open("dashboard-data.json", "w") as f:
+        json.dump(dashboard, f, indent=2)
+
     diff_cmds = generate_pprof_diffs(args.results_dir)
     if diff_cmds:
         print("\nPprof diff commands:", file=sys.stderr)
         for cmd in diff_cmds:
             print(f"  {cmd}", file=sys.stderr)
 
-    print("\nWrote summary.md, gh-bench-bigger.json, gh-bench-smaller.json", file=sys.stderr)
+    print(
+        "\nWrote summary.md, gh-bench-bigger.json, gh-bench-smaller.json, dashboard-data.json",
+        file=sys.stderr,
+    )
 
     return md, gh_bench

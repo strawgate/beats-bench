@@ -211,6 +211,8 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Generate summary
+        env:
+          GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
           uv run beats-bench summarize \
             --results-dir all-results \
@@ -250,6 +252,51 @@ jobs:
           auto-push: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Publish custom dashboard data
+        if: always()
+        continue-on-error: true
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -e
+          # Clone gh-pages branch
+          git clone --branch gh-pages --single-branch --depth 1 \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            gh-pages-checkout
+
+          # Ensure data directories exist
+          mkdir -p gh-pages-checkout/data/runs
+
+          # Copy run data
+          cp dashboard-data.json gh-pages-checkout/data/runs/${RUN_ID}.json
+
+          # Update index.json — merge new entry into existing runs list
+          python3 -c "
+          import json, sys
+          new = json.load(open('dashboard-data.json'))
+          entry = new['index_entry']
+          idx_path = 'gh-pages-checkout/data/index.json'
+          try:
+              idx = json.load(open(idx_path))
+          except (FileNotFoundError, json.JSONDecodeError):
+              idx = {'runs': []}
+          # Remove existing entry with same id (re-run case)
+          idx['runs'] = [r for r in idx['runs'] if r['id'] != entry['id']]
+          idx['runs'].append(entry)
+          # Sort by date descending
+          idx['runs'].sort(key=lambda r: r['date'], reverse=True)
+          json.dump(idx, open(idx_path, 'w'), indent=2)
+          "
+
+          # Commit and push
+          cd gh-pages-checkout
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Add dashboard data for run ${RUN_ID}"
+          git push
+
       - name: Upload summary and diffs
         uses: actions/upload-artifact@v4
         with:
@@ -258,6 +305,7 @@ jobs:
             summary.md
             gh-bench-bigger.json
             gh-bench-smaller.json
+            dashboard-data.json
             all-results/**/*-diff.txt
             all-results/**/*.pprof
           retention-days: 90
