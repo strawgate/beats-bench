@@ -271,7 +271,7 @@ jobs:
           lines = []
           lines.append("## Filebeat Pipeline Benchmark Results\n")
           lines.append(f"**Base:** `${{ inputs.base_ref }}` @ `${{ inputs.beats_repo }}`")
-          lines.append(f"**PR:** `${{ inputs.pr_ref }}` @ `${{ inputs.pr_repo or inputs.beats_repo }}`")
+          lines.append(f"**PR:** `${{ inputs.pr_ref }}` @ `${{ inputs.pr_repo || inputs.beats_repo }}`")
           lines.append(f"**Runs per scenario:** ${{ inputs.runs_per_scenario }}")
           lines.append(f"**Measurement window:** ${{ inputs.measurement_seconds }}s\n")
           lines.append("| Scenario | CPU | Base EPS | PR EPS | Change |")
