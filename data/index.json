@@ -1,6 +1,40 @@
 {
   "runs": [
     {
+      "id": "23762168203",
+      "date": "2026-03-30T19:00:14Z",
+      "base_ref": "main",
+      "pr_ref": "claude-optimize-add-field-processors-ep8Ok",
+      "base_repo": "elastic/beats",
+      "pr_repo": "strawgate/beats",
+      "type": "pr",
+      "pr_number": "",
+      "commit_sha": "dc8cca785464d71663f06e3923c5837d731a31d5",
+      "summary": {
+        "full-agent-dissect": {
+          "1.0": {
+            "base_avg": 14958,
+            "pr_avg": 16530,
+            "delta_pct": 10.5
+          }
+        },
+        "passthrough": {
+          "1.0": {
+            "base_avg": 70296,
+            "pr_avg": 65292,
+            "delta_pct": -7.1
+          }
+        }
+      },
+      "scenarios": [
+        "full-agent-dissect",
+        "passthrough"
+      ],
+      "cpus": [
+        "1.0"
+      ]
+    },
+    {
       "id": "23760935157",
       "date": "2026-03-30T18:35:27Z",
       "base_ref": "main",
