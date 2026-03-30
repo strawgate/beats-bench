@@ -7,6 +7,7 @@ import time
 from dataclasses import dataclass, field
 
 from beats_bench.docker import (
+    ensure_network,
     fetch_json,
     reset_mock_es,
     start_filebeat,
@@ -145,7 +146,8 @@ def run_one(
     config_path = _resolve_path(config_path)
     mock_es_path = _resolve_path(mock_es_path)
 
-    # Clean up any leftovers
+    # Ensure Docker network exists and clean up any leftovers
+    ensure_network()
     stop_all()
 
     # Start mock-es

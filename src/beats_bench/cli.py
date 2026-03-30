@@ -56,9 +56,6 @@ def _cmd_summarize(args: argparse.Namespace) -> None:
 def _cmd_local_run(args: argparse.Namespace) -> None:
     import subprocess
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    bench_root = os.path.dirname(os.path.dirname(script_dir))
-
     # Try to find bench root by looking for scripts/build.sh
     # Walk up from the current working directory
     bench_root = os.getcwd()

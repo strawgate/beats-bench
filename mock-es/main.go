@@ -20,9 +20,21 @@ var (
 	batchCount    atomic.Int64
 	batchDocsMin  atomic.Int64
 	batchDocsMax  atomic.Int64
-	startTime     time.Time
+	startTimeNano atomic.Int64
 	startOnce     sync.Once
 )
+
+func getStartTime() time.Time {
+	nanos := startTimeNano.Load()
+	if nanos == 0 {
+		return time.Now()
+	}
+	return time.Unix(0, nanos)
+}
+
+func setStartTime(t time.Time) {
+	startTimeNano.Store(t.UnixNano())
+}
 
 func main() {
 	addr := ":9200"
@@ -38,7 +50,7 @@ func main() {
 		docs := docsIngested.Load()
 		batches := batchCount.Load()
 		bytes := bytesReceived.Load()
-		elapsed := time.Since(startTime).Seconds()
+		elapsed := time.Since(getStartTime()).Seconds()
 		var docsPerSec float64
 		var avgBatchSize float64
 		if elapsed > 0 {
@@ -58,7 +70,7 @@ func main() {
 		batchCount.Store(0)
 		batchDocsMin.Store(0)
 		batchDocsMax.Store(0)
-		startTime = time.Now()
+		setStartTime(time.Now())
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, `{"reset":true}`)
 	})
@@ -106,7 +118,7 @@ func main() {
 }
 
 func bulkHandler(w http.ResponseWriter, r *http.Request) {
-	startOnce.Do(func() { startTime = time.Now() })
+	startOnce.Do(func() { setStartTime(time.Now()) })
 
 	var bodyReader io.Reader = r.Body
 	if r.Header.Get("Content-Encoding") == "gzip" {

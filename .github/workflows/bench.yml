@@ -115,11 +115,11 @@ jobs:
       - name: Build mock-es
         run: |
           cd mock-es
-          CGO_ENABLED=0 go build -o ${{ github.workspace }}/mock-es .
+          CGO_ENABLED=0 go build -o ${{ github.workspace }}/mock-es-bin .
       - uses: actions/upload-artifact@v4
         with:
           name: mock-es
-          path: mock-es
+          path: mock-es-bin
           retention-days: 1
 
   # ---------------------------------------------------------------
@@ -157,8 +157,8 @@ jobs:
 
       - name: Prepare
         run: |
-          chmod +x bin/filebeat-base/filebeat-base bin/filebeat-pr/filebeat-pr bin/mock-es/mock-es
-          sudo cp bin/mock-es/mock-es /usr/local/bin/mock-es
+          chmod +x bin/filebeat-base/filebeat-base bin/filebeat-pr/filebeat-pr bin/mock-es/mock-es-bin
+          sudo cp bin/mock-es/mock-es-bin /usr/local/bin/mock-es
           sudo cp pipelines/${{ matrix.scenario }}.yml /tmp/fb-config.yml
           sudo chown root:root /tmp/fb-config.yml
 
