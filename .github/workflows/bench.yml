@@ -162,17 +162,20 @@ jobs:
           sudo cp pipelines/${{ matrix.scenario }}.yml /tmp/fb-config.yml
           sudo chown root:root /tmp/fb-config.yml
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Run benchmarks
         run: |
-          ./scripts/run-scenario.sh \
-            bin/filebeat-base/filebeat-base \
-            bin/filebeat-pr/filebeat-pr \
-            /tmp/fb-config.yml \
-            /usr/local/bin/mock-es \
-            ${{ matrix.cpu }} \
-            ${{ inputs.measurement_seconds }} \
-            ${{ inputs.runs_per_scenario }} \
-            results
+          uv run beats-bench run-scenario \
+            --base-binary bin/filebeat-base/filebeat-base \
+            --pr-binary bin/filebeat-pr/filebeat-pr \
+            --config /tmp/fb-config.yml \
+            --mock-es /usr/local/bin/mock-es \
+            --cpus ${{ matrix.cpu }} \
+            --measure ${{ inputs.measurement_seconds }} \
+            --runs ${{ inputs.runs_per_scenario }} \
+            --output-dir results
 
       - name: Upload results
         uses: actions/upload-artifact@v4
@@ -203,9 +206,12 @@ jobs:
           go-version: "1.26"
           cache: false
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Generate summary
         run: |
-          python3 scripts/summarize.py \
+          uv run beats-bench summarize \
             --results-dir all-results \
             --base-ref "${{ inputs.base_ref }}" \
             --pr-ref "${{ inputs.pr_ref }}" \

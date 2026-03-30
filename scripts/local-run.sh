@@ -47,16 +47,17 @@ fi
 TMPCONFIG=$(mktemp)
 cp "$CONFIG" "$TMPCONFIG"
 
-# Run benchmark
-"$SCRIPT_DIR/run-scenario.sh" \
-  "$BENCH_ROOT/bin/base/filebeat" \
-  "$BENCH_ROOT/bin/pr/filebeat" \
-  "$TMPCONFIG" \
-  "$BENCH_ROOT/bin/mock-es" \
-  "$CPUS" \
-  "$MEASURE" \
-  "$RUNS" \
-  "$BENCH_ROOT/results/${SCENARIO}-${CPUS}cpu"
+# Run benchmark via Python CLI
+cd "$BENCH_ROOT"
+uv run beats-bench run-scenario \
+  --base-binary "$BENCH_ROOT/bin/base/filebeat" \
+  --pr-binary "$BENCH_ROOT/bin/pr/filebeat" \
+  --config "$TMPCONFIG" \
+  --mock-es "$BENCH_ROOT/bin/mock-es" \
+  --cpus "$CPUS" \
+  --measure "$MEASURE" \
+  --runs "$RUNS" \
+  --output-dir "$BENCH_ROOT/results/${SCENARIO}-${CPUS}cpu"
 
 rm -f "$TMPCONFIG"
 
