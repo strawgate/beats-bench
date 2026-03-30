@@ -1,9 +1,10 @@
-"""Generate markdown + dashboard JSON from benchmark results (replaces scripts/summarize.py)."""
+"""Generate markdown + dashboard JSON from benchmark results, and build the static site."""
 
 from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -22,6 +23,9 @@ class SummarizeArgs:
     pr_repo: str
     runs_per_scenario: int
     measure_seconds: int
+    existing_data: str = ""
+    output_dir: str = ""
+    run_id: str = ""
 
 
 def load_results(results_dir: str) -> list[dict]:
@@ -190,128 +194,6 @@ def generate_summary(results: list[dict], args: SummarizeArgs) -> tuple[str, lis
     return "\n".join(lines), gh_bench
 
 
-def build_gh_bench_full(results: list[dict]) -> tuple[list[dict], list[dict]]:
-    """Build comprehensive gh-bench.json with all metrics for the dashboard.
-
-    Returns:
-        Tuple of (bigger_is_better, smaller_is_better) benchmark lists.
-    """
-    bigger: list[dict] = []
-    smaller: list[dict] = []
-
-    for r in results:
-        base_vals = [int(x) for x in r["base_eps"].split(",") if x]
-        pr_vals = [int(x) for x in r["pr_eps"].split(",") if x]
-        if not base_vals or not pr_vals:
-            continue
-
-        base_avg = sum(base_vals) // len(base_vals)
-        pr_avg = sum(pr_vals) // len(pr_vals)
-        delta = (pr_avg - base_avg) * 100 // base_avg if base_avg > 0 else 0
-        sign = "+" if delta >= 0 else ""
-        scenario = r["scenario"]
-        cpu = r["cpu"]
-        prefix = f"{scenario} ({cpu} CPU)"
-
-        bigger.append(
-            {
-                "name": f"{prefix} EPS",
-                "unit": "events/sec",
-                "value": pr_avg,
-                "extra": f"base={base_avg} delta={sign}{delta}%",
-            }
-        )
-
-        pr_runs = r.get("pr_runs", [])
-        base_runs = r.get("base_runs", [])
-        if pr_runs:
-            last_pr = pr_runs[-1]
-            last_base = base_runs[-1] if base_runs else {}
-
-            bigger.append(
-                {
-                    "name": f"{prefix} mock docs/sec",
-                    "unit": "docs/sec",
-                    "value": int(last_pr.get("mock_docs_per_sec", 0)),
-                }
-            )
-
-            pr_ape = last_pr.get("alloc_per_event", 0)
-            base_ape = last_base.get("alloc_per_event", 0)
-            smaller.append(
-                {
-                    "name": f"{prefix} alloc/event",
-                    "unit": "bytes",
-                    "value": int(pr_ape),
-                    "extra": f"base={int(base_ape)}" if base_ape else "",
-                }
-            )
-
-            pr_bpe = last_pr.get("bytes_per_event", 0)
-            base_bpe = last_base.get("bytes_per_event", 0)
-            smaller.append(
-                {
-                    "name": f"{prefix} bytes/event",
-                    "unit": "bytes",
-                    "value": int(pr_bpe),
-                    "extra": f"base={int(base_bpe)}" if base_bpe else "",
-                }
-            )
-
-            smaller.append(
-                {
-                    "name": f"{prefix} heap MB",
-                    "unit": "MB",
-                    "value": round(last_pr.get("memory_alloc_mb", 0), 1),
-                }
-            )
-
-    return bigger, smaller
-
-
-def generate_pprof_diffs(results_dir: str) -> list[str]:
-    """Generate pprof diff commands and attempt to create text diffs."""
-    results_path = Path(results_dir)
-    diff_commands: list[str] = []
-
-    for subdir in sorted(results_path.iterdir()):
-        if not subdir.is_dir():
-            continue
-
-        for profile_type, diff_name in [("allocs", "allocs-diff"), ("cpu", "cpu-diff")]:
-            base_profile = subdir / f"base-{profile_type}.pprof"
-            pr_profile = subdir / f"pr-{profile_type}.pprof"
-
-            if not (base_profile.exists() and pr_profile.exists()):
-                continue
-
-            diff_commands.append(f"go tool pprof -diff_base {base_profile} {pr_profile}")
-
-            diff_file = subdir / f"{diff_name}.txt"
-            try:
-                result = subprocess.run(
-                    [
-                        "go",
-                        "tool",
-                        "pprof",
-                        "-text",
-                        "-diff_base",
-                        str(base_profile),
-                        str(pr_profile),
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=30,
-                    check=False,
-                )
-                if result.returncode == 0:
-                    diff_file.write_text(result.stdout)
-            except (subprocess.SubprocessError, OSError):
-                pass
-
-    return diff_commands
-
-
 def generate_dashboard_data(results: list[dict], args: SummarizeArgs, run_id: str) -> dict:
     """Generate structured JSON for the custom GitHub Pages dashboard.
 
@@ -371,6 +253,106 @@ def generate_dashboard_data(results: list[dict], args: SummarizeArgs, run_id: st
     return {"run_data": run_data, "index_entry": index_entry}
 
 
+def generate_pprof_diffs(results_dir: str) -> list[str]:
+    """Generate pprof diff commands and attempt to create text diffs."""
+    results_path = Path(results_dir)
+    diff_commands: list[str] = []
+
+    for subdir in sorted(results_path.iterdir()):
+        if not subdir.is_dir():
+            continue
+
+        for profile_type, diff_name in [("allocs", "allocs-diff"), ("cpu", "cpu-diff")]:
+            base_profile = subdir / f"base-{profile_type}.pprof"
+            pr_profile = subdir / f"pr-{profile_type}.pprof"
+
+            if not (base_profile.exists() and pr_profile.exists()):
+                continue
+
+            diff_commands.append(f"go tool pprof -diff_base {base_profile} {pr_profile}")
+
+            diff_file = subdir / f"{diff_name}.txt"
+            try:
+                result = subprocess.run(
+                    [
+                        "go",
+                        "tool",
+                        "pprof",
+                        "-text",
+                        "-diff_base",
+                        str(base_profile),
+                        str(pr_profile),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    check=False,
+                )
+                if result.returncode == 0:
+                    diff_file.write_text(result.stdout)
+            except (subprocess.SubprocessError, OSError):
+                pass
+
+    return diff_commands
+
+
+def build_site(output_dir: str, existing_data: str, dashboard: dict) -> None:
+    """Build the full static site in output_dir.
+
+    Copies HTML templates, merges existing data with the new run, and writes
+    all data files to output_dir.
+    """
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    # Copy HTML/CSS templates from the package templates directory
+    templates_dir = Path(__file__).parent / "templates"
+    for name in ("index.html", "run.html", "style.css"):
+        src = templates_dir / name
+        if src.exists():
+            shutil.copy2(src, out / name)
+
+    # Load existing index and runs
+    existing_path = Path(existing_data) if existing_data else Path()
+    existing_index: dict = {"runs": []}
+    existing_runs: dict[str, dict] = {}
+
+    if existing_data:
+        idx_file = existing_path / "index.json"
+        if idx_file.exists():
+            existing_index = json.loads(idx_file.read_text())
+        # Load existing run JSONs
+        runs_dir = existing_path / "runs"
+        if runs_dir.exists():
+            for f in runs_dir.iterdir():
+                if f.suffix == ".json":
+                    existing_runs[f.stem] = json.loads(f.read_text())
+
+    # Add the new run
+    new_entry = dashboard["index_entry"]
+    new_run_data = dashboard["run_data"]
+    run_id = new_entry["id"]
+
+    # Remove any existing entry with same id (re-run case)
+    existing_index["runs"] = [r for r in existing_index["runs"] if r["id"] != run_id]
+    existing_index["runs"].append(new_entry)
+    # Sort by date descending
+    existing_index["runs"].sort(key=lambda r: r["date"], reverse=True)
+
+    # Store new run data (wrapped in run_data key for compatibility)
+    existing_runs[run_id] = {"run_data": new_run_data}
+
+    # Write data directory
+    data_dir = out / "data"
+    runs_out = data_dir / "runs"
+    runs_out.mkdir(parents=True, exist_ok=True)
+
+    (data_dir / "index.json").write_text(json.dumps(existing_index, indent=2))
+
+    for rid, rdata in existing_runs.items():
+        (runs_out / f"{rid}.json").write_text(json.dumps(rdata, indent=2))
+
+
 def summarize(args: SummarizeArgs) -> tuple[str, list[dict]]:
     """Main summarize entry point. Returns (markdown, gh_bench)."""
     results = load_results(args.results_dir)
@@ -384,19 +366,16 @@ def summarize(args: SummarizeArgs) -> tuple[str, list[dict]]:
     with open("summary.md", "w") as f:
         f.write(md)
 
-    bigger, smaller = build_gh_bench_full(results)
-    with open("gh-bench-bigger.json", "w") as f:
-        json.dump(bigger, f, indent=2)
-    with open("gh-bench-smaller.json", "w") as f:
-        json.dump(smaller, f, indent=2)
-    with open("gh-bench.json", "w") as f:
-        json.dump(bigger, f, indent=2)
-
     # Generate custom dashboard data
-    run_id = os.environ.get("GITHUB_RUN_ID", "local")
+    run_id = args.run_id or os.environ.get("GITHUB_RUN_ID", "local")
     dashboard = generate_dashboard_data(results, args, run_id)
     with open("dashboard-data.json", "w") as f:
         json.dump(dashboard, f, indent=2)
+
+    # Build static site if output_dir is specified
+    if args.output_dir:
+        build_site(args.output_dir, args.existing_data, dashboard)
+        print(f"\nBuilt static site in {args.output_dir}", file=sys.stderr)
 
     diff_cmds = generate_pprof_diffs(args.results_dir)
     if diff_cmds:
@@ -405,7 +384,7 @@ def summarize(args: SummarizeArgs) -> tuple[str, list[dict]]:
             print(f"  {cmd}", file=sys.stderr)
 
     print(
-        "\nWrote summary.md, gh-bench-bigger.json, gh-bench-smaller.json, dashboard-data.json",
+        "\nWrote summary.md, dashboard-data.json",
         file=sys.stderr,
     )
 

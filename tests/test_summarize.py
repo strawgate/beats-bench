@@ -1,4 +1,4 @@
-"""Tests for markdown generation and gh-bench JSON generation."""
+"""Tests for markdown generation, dashboard data, and site building."""
 
 from __future__ import annotations
 
@@ -6,7 +6,8 @@ import json
 
 from beats_bench.summarize import (
     SummarizeArgs,
-    build_gh_bench_full,
+    build_site,
+    generate_dashboard_data,
     generate_summary,
     load_results,
 )
@@ -85,28 +86,80 @@ class TestGenerateSummary:
         assert "+7%" in md
 
 
-class TestBuildGhBenchFull:
-    def test_bigger_and_smaller(self, sample_results_dir):
+class TestBuildSite:
+    def test_site_contains_expected_files(self, sample_results_dir, tmp_path):
         results = load_results(str(sample_results_dir))
-        bigger, smaller = build_gh_bench_full(results)
+        args = _make_args()
+        dashboard = generate_dashboard_data(results, args, "12345")
 
-        # Should have EPS + mock docs/sec in bigger
-        assert len(bigger) == 2
-        eps_entry = bigger[0]
-        assert "EPS" in eps_entry["name"]
-        assert eps_entry["unit"] == "events/sec"
+        output_dir = str(tmp_path / "_site")
+        build_site(output_dir, "", dashboard)
 
-        # Should have alloc/event, bytes/event, heap MB in smaller
-        assert len(smaller) == 3
-        names = [s["name"] for s in smaller]
-        assert any("alloc/event" in n for n in names)
-        assert any("bytes/event" in n for n in names)
-        assert any("heap MB" in n for n in names)
+        from pathlib import Path
 
-    def test_json_serializable(self, sample_results_dir):
+        site = Path(output_dir)
+        assert (site / "index.html").exists()
+        assert (site / "run.html").exists()
+        assert (site / "style.css").exists()
+        assert (site / "data" / "index.json").exists()
+        assert (site / "data" / "runs" / "12345.json").exists()
+
+        # Verify index.json structure
+        idx = json.loads((site / "data" / "index.json").read_text())
+        assert len(idx["runs"]) == 1
+        assert idx["runs"][0]["id"] == "12345"
+
+        # Verify run JSON is valid and contains run_data
+        run_json = json.loads((site / "data" / "runs" / "12345.json").read_text())
+        assert "run_data" in run_json
+        assert run_json["run_data"]["id"] == "12345"
+
+    def test_site_merges_existing_data(self, sample_results_dir, tmp_path):
         results = load_results(str(sample_results_dir))
-        bigger, smaller = build_gh_bench_full(results)
+        args = _make_args()
 
-        # Must be JSON-serializable for the workflow
-        json.dumps(bigger)
-        json.dumps(smaller)
+        # Create existing data directory with a prior run
+        existing = tmp_path / "existing"
+        existing.mkdir()
+        runs_dir = existing / "runs"
+        runs_dir.mkdir()
+        old_entry = {
+            "id": "99999",
+            "date": "2025-01-01T00:00:00Z",
+            "base_ref": "main",
+            "pr_ref": "old-branch",
+            "base_repo": "elastic/beats",
+            "pr_repo": "elastic/beats",
+            "scenarios": ["passthrough"],
+            "cpus": ["1.0"],
+        }
+        (existing / "index.json").write_text(json.dumps({"runs": [old_entry]}))
+        (runs_dir / "99999.json").write_text(json.dumps({"run_data": {"id": "99999"}}))
+
+        dashboard = generate_dashboard_data(results, args, "12345")
+        output_dir = str(tmp_path / "_site")
+        build_site(output_dir, str(existing), dashboard)
+
+        from pathlib import Path
+
+        site = Path(output_dir)
+        idx = json.loads((site / "data" / "index.json").read_text())
+        # Should have both old and new runs
+        assert len(idx["runs"]) == 2
+        ids = [r["id"] for r in idx["runs"]]
+        assert "12345" in ids
+        assert "99999" in ids
+
+        # Both run JSONs should exist
+        assert (site / "data" / "runs" / "12345.json").exists()
+        assert (site / "data" / "runs" / "99999.json").exists()
+
+    def test_dashboard_data_json_serializable(self, sample_results_dir):
+        results = load_results(str(sample_results_dir))
+        args = _make_args()
+        dashboard = generate_dashboard_data(results, args, "12345")
+
+        # Must be JSON-serializable
+        json.dumps(dashboard)
+        assert "run_data" in dashboard
+        assert "index_entry" in dashboard

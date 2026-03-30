@@ -38,7 +38,8 @@ on:
 
 permissions:
   contents: write
-  issues: write
+  pages: write
+  id-token: write
 
 jobs:
   # ---------------------------------------------------------------
@@ -187,15 +188,22 @@ jobs:
           retention-days: 30
 
   # ---------------------------------------------------------------
-  # Summarize all results
+  # Summarize all results, build site, deploy
   # ---------------------------------------------------------------
   summarize:
     needs: bench
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download all results
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Download bench results
         uses: actions/download-artifact@v4
         with:
           pattern: results-*
@@ -207,95 +215,53 @@ jobs:
           go-version: "1.26"
           cache: false
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+      - name: Fetch existing data from bench-data branch
+        run: |
+          git fetch origin bench-data:bench-data 2>/dev/null || true
+          mkdir -p site-data/runs
+          if git show bench-data:data/index.json > /dev/null 2>&1; then
+            git show bench-data:data/index.json > site-data/index.json
+            # Copy all existing run JSONs
+            for f in $(git ls-tree --name-only bench-data data/runs/ 2>/dev/null); do
+              git show "bench-data:$f" > "site-data/runs/$(basename $f)" 2>/dev/null || true
+            done
+          fi
 
-      - name: Generate summary
-        env:
-          GITHUB_RUN_ID: ${{ github.run_id }}
+      - name: Generate summary and site
         run: |
           uv run beats-bench summarize \
             --results-dir all-results \
+            --existing-data site-data \
+            --output-dir _site \
             --base-ref "${{ inputs.base_ref }}" \
             --pr-ref "${{ inputs.pr_ref }}" \
             --base-repo "${{ inputs.beats_repo }}" \
             --pr-repo "${{ inputs.pr_repo || inputs.beats_repo }}" \
             --runs-per-scenario "${{ inputs.runs_per_scenario }}" \
-            --measure-seconds "${{ inputs.measurement_seconds }}"
+            --measure-seconds "${{ inputs.measurement_seconds }}" \
+            --run-id "${{ github.run_id }}"
 
       - name: Post summary to job
         run: cat summary.md >> $GITHUB_STEP_SUMMARY
 
-      - name: Publish throughput dashboard
-        uses: benchmark-action/github-action-benchmark@v1
-        if: always()
-        continue-on-error: true
-        with:
-          name: Throughput (higher is better)
-          tool: customBiggerIsBetter
-          output-file-path: gh-bench-bigger.json
-          gh-pages-branch: gh-pages
-          benchmark-data-dir-path: dev/bench/throughput
-          auto-push: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish efficiency dashboard
-        uses: benchmark-action/github-action-benchmark@v1
-        if: always()
-        continue-on-error: true
-        with:
-          name: Efficiency (lower is better)
-          tool: customSmallerIsBetter
-          output-file-path: gh-bench-smaller.json
-          gh-pages-branch: gh-pages
-          benchmark-data-dir-path: dev/bench/efficiency
-          auto-push: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish custom dashboard data
-        if: always()
-        continue-on-error: true
-        env:
-          RUN_ID: ${{ github.run_id }}
+      - name: Push new data to bench-data branch
         run: |
-          set -e
-          # Clone gh-pages branch
-          git clone --branch gh-pages --single-branch --depth 1 \
-            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
-            gh-pages-checkout
-
-          # Ensure data directories exist
-          mkdir -p gh-pages-checkout/data/runs
-
-          # Copy run data
-          cp dashboard-data.json gh-pages-checkout/data/runs/${RUN_ID}.json
-
-          # Update index.json — merge new entry into existing runs list
-          python3 -c "
-          import json, sys
-          new = json.load(open('dashboard-data.json'))
-          entry = new['index_entry']
-          idx_path = 'gh-pages-checkout/data/index.json'
-          try:
-              idx = json.load(open(idx_path))
-          except (FileNotFoundError, json.JSONDecodeError):
-              idx = {'runs': []}
-          # Remove existing entry with same id (re-run case)
-          idx['runs'] = [r for r in idx['runs'] if r['id'] != entry['id']]
-          idx['runs'].append(entry)
-          # Sort by date descending
-          idx['runs'].sort(key=lambda r: r['date'], reverse=True)
-          json.dump(idx, open(idx_path, 'w'), indent=2)
-          "
-
-          # Commit and push
-          cd gh-pages-checkout
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B bench-data origin/bench-data 2>/dev/null || git checkout --orphan bench-data
+          git rm -rf . 2>/dev/null || true
+          cp -r _site/data .
           git add data/
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "Add dashboard data for run ${RUN_ID}"
-          git push
+          git commit -m "Add benchmark data for run ${{ github.run_id }}" || true
+          git push origin bench-data
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
 
       - name: Upload summary and diffs
         uses: actions/upload-artifact@v4
@@ -303,8 +269,6 @@ jobs:
           name: benchmark-summary
           path: |
             summary.md
-            gh-bench-bigger.json
-            gh-bench-smaller.json
             dashboard-data.json
             all-results/**/*-diff.txt
             all-results/**/*.pprof

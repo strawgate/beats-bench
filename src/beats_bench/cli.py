@@ -50,6 +50,9 @@ def _cmd_summarize(args: argparse.Namespace) -> None:
             pr_repo=args.pr_repo,
             runs_per_scenario=args.runs_per_scenario,
             measure_seconds=args.measure_seconds,
+            existing_data=getattr(args, "existing_data", "") or "",
+            output_dir=getattr(args, "output_dir", "") or "",
+            run_id=getattr(args, "run_id", "") or "",
         )
     )
 
@@ -150,6 +153,9 @@ def main() -> None:
     p_summarize.add_argument("--pr-repo", required=True, help="PR repo (owner/repo)")
     p_summarize.add_argument("--runs-per-scenario", type=int, required=True)
     p_summarize.add_argument("--measure-seconds", type=int, required=True)
+    p_summarize.add_argument("--existing-data", default="", help="Path to existing data directory")
+    p_summarize.add_argument("--output-dir", default="", help="Path to write the full static site")
+    p_summarize.add_argument("--run-id", default="", help="Current workflow run ID")
     p_summarize.set_defaults(func=_cmd_summarize)
 
     # local-run
