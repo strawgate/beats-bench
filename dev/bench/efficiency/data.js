@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774890979777,
+  "lastUpdate": 1774893776432,
   "repoUrl": "https://github.com/strawgate/beats-bench",
   "entries": {
     "Efficiency (lower is better)": [
@@ -55,6 +55,79 @@ window.BENCHMARK_DATA = {
           {
             "name": "passthrough (1.0 CPU) heap MB",
             "value": 11.6,
+            "unit": "MB"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "strawgate",
+            "username": "strawgate",
+            "email": "williamseaston@gmail.com"
+          },
+          "committer": {
+            "name": "strawgate",
+            "username": "strawgate",
+            "email": "williamseaston@gmail.com"
+          },
+          "id": "e7ca9ac9e31cadad9c4ca2e1a6a2d482abbd0748",
+          "message": "Generate dashboard data JSON and push to gh-pages\n\nsummarize.py: new generate_dashboard_data() produces structured JSON\nwith per-scenario EPS, full run details with samples, and an index\nentry for the manifest.\n\nworkflow: new 'Publish custom dashboard data' step clones gh-pages,\nwrites data/runs/{id}.json and updates data/index.json, pushes.",
+          "timestamp": "2026-03-30T17:51:55Z",
+          "url": "https://github.com/strawgate/beats-bench/commit/e7ca9ac9e31cadad9c4ca2e1a6a2d482abbd0748"
+        },
+        "date": 1774893775790,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "full-agent-dissect (1.0 CPU) alloc/event",
+            "value": 18215,
+            "unit": "bytes",
+            "extra": "base=24370"
+          },
+          {
+            "name": "full-agent-dissect (1.0 CPU) bytes/event",
+            "value": 1948,
+            "unit": "bytes",
+            "extra": "base=1947"
+          },
+          {
+            "name": "full-agent-dissect (1.0 CPU) heap MB",
+            "value": 14.5,
+            "unit": "MB"
+          },
+          {
+            "name": "full-agent-rename-only (1.0 CPU) alloc/event",
+            "value": 13958,
+            "unit": "bytes",
+            "extra": "base=17488"
+          },
+          {
+            "name": "full-agent-rename-only (1.0 CPU) bytes/event",
+            "value": 1673,
+            "unit": "bytes",
+            "extra": "base=1671"
+          },
+          {
+            "name": "full-agent-rename-only (1.0 CPU) heap MB",
+            "value": 23.2,
+            "unit": "MB"
+          },
+          {
+            "name": "passthrough (1.0 CPU) alloc/event",
+            "value": 3229,
+            "unit": "bytes",
+            "extra": "base=3238"
+          },
+          {
+            "name": "passthrough (1.0 CPU) bytes/event",
+            "value": 567,
+            "unit": "bytes",
+            "extra": "base=567"
+          },
+          {
+            "name": "passthrough (1.0 CPU) heap MB",
+            "value": 19.3,
             "unit": "MB"
           }
         ]
