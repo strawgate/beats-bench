@@ -34,6 +34,7 @@ def _cmd_run_scenario(args: argparse.Namespace) -> None:
         measure=args.measure,
         runs=args.runs,
         output_dir=args.output_dir,
+        scenario_name=getattr(args, "scenario", None),
     )
 
 
@@ -136,6 +137,7 @@ def main() -> None:
     p_scenario.add_argument("--cpus", default="1.0", help="CPU limit for Docker")
     p_scenario.add_argument("--measure", type=int, default=20, help="Measurement seconds")
     p_scenario.add_argument("--runs", type=int, default=3, help="Number of measurement runs")
+    p_scenario.add_argument("--scenario", default=None, help="Scenario name")
     p_scenario.add_argument("--output-dir", required=True, help="Output directory")
     p_scenario.set_defaults(func=_cmd_run_scenario)
 

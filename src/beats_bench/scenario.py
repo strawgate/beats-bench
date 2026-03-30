@@ -27,6 +27,7 @@ def run_scenario(
     measure: int,
     runs: int,
     output_dir: str,
+    scenario_name: str | None = None,
 ) -> list[RunResult]:
     """Run a full benchmark scenario: warmup + N alternating runs + profiles."""
     os.makedirs(output_dir, exist_ok=True)
@@ -93,10 +94,10 @@ def run_scenario(
         stop_all()
 
     # Write results.txt
-    config_basename = os.path.splitext(os.path.basename(config))[0]
+    name = scenario_name or os.path.splitext(os.path.basename(config))[0]
     results_path = os.path.join(output_dir, "results.txt")
     with open(results_path, "w") as f:
-        f.write(f"scenario={config_basename}\n")
+        f.write(f"scenario={name}\n")
         f.write(f"cpu={cpus}\n")
         f.write(f"base_eps={','.join(str(e) for e in base_eps_list)}\n")
         f.write(f"pr_eps={','.join(str(e) for e in pr_eps_list)}\n")
