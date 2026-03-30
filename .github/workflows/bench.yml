@@ -20,9 +20,9 @@ on:
         required: false
         default: ""
       scenarios:
-        description: "Comma-separated pipeline scenarios (worst-case,with-dissect,mid-case,best-case)"
+        description: "Comma-separated pipeline scenarios"
         required: true
-        default: "with-dissect,worst-case"
+        default: "full-agent-dissect,full-agent-rename-only,enrichment-only,passthrough"
       cpus:
         description: "Comma-separated CPU limits for Docker (0.5,1.0)"
         required: true
@@ -98,16 +98,30 @@ jobs:
           retention-days: 1
 
   # ---------------------------------------------------------------
+  # Generate matrix from comma-separated inputs
+  # ---------------------------------------------------------------
+  matrix-setup:
+    runs-on: ubuntu-latest
+    outputs:
+      scenarios: ${{ steps.gen.outputs.scenarios }}
+      cpus: ${{ steps.gen.outputs.cpus }}
+    steps:
+      - id: gen
+        run: |
+          echo "scenarios=$(echo '${{ inputs.scenarios }}' | python3 -c 'import sys; print("[\"" + "\",\"".join(sys.stdin.read().strip().split(",")) + "\"]")')" >> $GITHUB_OUTPUT
+          echo "cpus=$(echo '${{ inputs.cpus }}' | python3 -c 'import sys; print("[\"" + "\",\"".join(sys.stdin.read().strip().split(",")) + "\"]")')" >> $GITHUB_OUTPUT
+
+  # ---------------------------------------------------------------
   # Benchmark matrix: scenario × cpu
   # ---------------------------------------------------------------
   bench:
-    needs: [build, build-mock-es]
+    needs: [build, build-mock-es, matrix-setup]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        scenario: ${{ fromJson(format('["{0}"]', join(fromJson(format('["{0}"]', replace(inputs.scenarios, ',', '","'))), '","'))) }}
-        cpu: ${{ fromJson(format('["{0}"]', join(fromJson(format('["{0}"]', replace(inputs.cpus, ',', '","'))), '","'))) }}
+        scenario: ${{ fromJson(needs.matrix-setup.outputs.scenarios) }}
+        cpu: ${{ fromJson(needs.matrix-setup.outputs.cpus) }}
     steps:
       - uses: actions/checkout@v4
 

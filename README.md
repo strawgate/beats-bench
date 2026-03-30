@@ -14,7 +14,7 @@ Go to [Actions → Filebeat Pipeline Benchmark](../../actions/workflows/bench.ym
 | `pr_ref` | `main` | PR branch/commit to benchmark |
 | `beats_repo` | `elastic/beats` | Base beats repository |
 | `pr_repo` | (same as beats_repo) | PR repository if different (e.g. `strawgate/beats`) |
-| `scenarios` | `with-dissect,worst-case` | Pipeline scenarios to test |
+| `scenarios` | `full-agent-dissect,full-agent-rename-only,enrichment-only,passthrough` | Pipeline scenarios to test |
 | `cpus` | `0.5,1.0` | Docker CPU limits |
 | `runs_per_scenario` | `3` | Measurement runs per binary per scenario |
 | `measurement_seconds` | `20` | Seconds to measure each run |
@@ -23,21 +23,21 @@ Go to [Actions → Filebeat Pipeline Benchmark](../../actions/workflows/bench.ym
 
 ```
 base_ref: main
-pr_ref: perf/skip-unnecessary-clone
+pr_ref: claude-optimize-add-field-processors-ep8Ok
 beats_repo: elastic/beats
 pr_repo: strawgate/beats
-scenarios: with-dissect,worst-case
+scenarios: full-agent-dissect,full-agent-rename-only
 cpus: 0.5,1.0
 ```
 
 ### Pipeline scenarios
 
-| Scenario | Description |
-|---|---|
-| `worst-case` | Full agent pipeline: dissect + rename + 6× add_fields + host/cloud/k8s/docker metadata |
-| `with-dissect` | Dissect + rename + 6× add_fields + host + cloud/container/k8s metadata |
-| `mid-case` | 4× add_fields + host metadata |
-| `best-case` | 2× add_fields only |
+| Scenario | Processors | What it measures |
+|---|---|---|
+| `full-agent-dissect` | rename + dissect + 6× add_fields + add_host_metadata | Full agent pipeline — the realistic worst case |
+| `full-agent-rename-only` | rename + 6× add_fields + add_host_metadata | Isolates rename clone skip from dissect |
+| `enrichment-only` | 6× add_fields + add_host_metadata | Baseline enrichment cost (no clone-affected processors) |
+| `passthrough` | (none) | Raw filebeat overhead — output throughput ceiling |
 
 ## Results
 
