@@ -178,8 +178,8 @@ def run_one(
     start_fb = parse_filebeat_stats(start_data) if start_data else None
     start_events = start_fb.events_total if start_fb else 0
 
-    # Sample every 5 seconds during measurement window
-    sample_interval = 5
+    # Sample every second during measurement window for smooth time-series charts
+    sample_interval = 1
     elapsed = 0
     samples: list[Sample] = []
     while elapsed < measure_seconds:
