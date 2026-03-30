@@ -1,0 +1,53 @@
+# TCP syslog input with dissect pipeline.
+# Measures network receive + processor throughput.
+# Requires a log generator sending to port 9000.
+filebeat.inputs:
+  - type: tcp
+    enabled: true
+    host: "0.0.0.0:9000"
+    max_message_size: 10KiB
+
+processors:
+  - rename:
+      fields:
+        - {from: "message", to: "event.original"}
+      ignore_missing: true
+  - dissect:
+      tokenizer: "%{timestamp} %{log_level}  [%{component}] %{source} method=%{method} path=%{path} status=%{status} duration_ms=%{duration} request_id=%{request_id} user_id=%{user_id} ip=%{client_ip}"
+      field: "event.original"
+      target_prefix: "dissect"
+  - add_fields:
+      target: "agent"
+      fields:
+        id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        name: "gke-node-abc123"
+        version: "8.17.0"
+        type: "filebeat"
+        hostname: "gke-node-abc123"
+  - add_fields:
+      target: ""
+      fields:
+        ecs.version: "8.0.0"
+        data_stream.type: "logs"
+        data_stream.dataset: "generic"
+        data_stream.namespace: "default"
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+
+output.elasticsearch:
+  hosts: ["mock-es:9200"]
+  protocol: "http"
+  allow_older_versions: true
+
+http.enabled: true
+http.host: "0.0.0.0"
+http.port: 5066
+http.pprof.enabled: true
+
+logging.level: warning
+logging.to_files: false
+
+queue.mem:
+  events: 4096
+  flush.min_events: 1024
+  flush.timeout: 1s

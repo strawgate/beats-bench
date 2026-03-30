@@ -32,12 +32,25 @@ cpus: 0.5,1.0
 
 ### Pipeline scenarios
 
+**Benchmark input (pure processor throughput, no I/O):**
+
 | Scenario | Processors | What it measures |
 |---|---|---|
 | `full-agent-dissect` | rename + dissect + 6× add_fields + add_host_metadata | Full agent pipeline — the realistic worst case |
 | `full-agent-rename-only` | rename + 6× add_fields + add_host_metadata | Isolates rename clone skip from dissect |
 | `enrichment-only` | 6× add_fields + add_host_metadata | Baseline enrichment cost (no clone-affected processors) |
 | `passthrough` | (none) | Raw filebeat overhead — output throughput ceiling |
+
+**Real input types (includes I/O overhead):**
+
+| Scenario | Input | Processors | What it measures |
+|---|---|---|---|
+| `filestream-dissect` | filestream (reads file) | rename + dissect + add_fields + add_host_metadata | File I/O + processor throughput |
+| `tcp-syslog-dissect` | TCP :9000 | rename + dissect + add_fields + add_host_metadata | Network receive + processor throughput |
+| `udp-syslog-dissect` | UDP :9000 | rename + dissect + add_fields + add_host_metadata | Network receive + processor throughput |
+| `tcp-cef-rename` | TCP :9000 | rename + copy_fields + 6× add_fields + add_host_metadata | Security integration pattern (CEF over syslog) |
+
+The TCP/UDP/filestream scenarios require the `log-generator` tool to feed data into filebeat. The benchmark input scenarios are self-contained.
 
 ## Results
 

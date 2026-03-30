@@ -1,0 +1,69 @@
+# CEF over TCP with rename + copy_fields — simulates security integrations
+# like imperva, trendmicro, ping_federate that receive CEF over syslog.
+filebeat.inputs:
+  - type: tcp
+    enabled: true
+    host: "0.0.0.0:9000"
+    max_message_size: 10KiB
+
+processors:
+  - rename:
+      fields:
+        - {from: "message", to: "event.original"}
+  - copy_fields:
+      fields:
+        - {from: "event.original", to: "@metadata.raw"}
+      fail_on_error: false
+  - add_fields:
+      target: "agent"
+      fields:
+        id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        name: "gke-node-abc123"
+        version: "8.17.0"
+        type: "filebeat"
+        hostname: "gke-node-abc123"
+  - add_fields:
+      target: ""
+      fields:
+        ecs.version: "8.0.0"
+        data_stream.type: "logs"
+        data_stream.dataset: "security"
+        data_stream.namespace: "default"
+  - add_fields:
+      target: "elastic_agent"
+      fields:
+        id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        version: "8.17.0"
+        snapshot: false
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_fields:
+      target: "cloud"
+      fields:
+        provider: "gcp"
+        region: "us-central1"
+        instance.id: "1234567890123456789"
+  - add_fields:
+      target: "kubernetes"
+      fields:
+        pod.name: "security-collector-xyz"
+        pod.namespace: "security"
+        node.name: "gke-node-abc123"
+
+output.elasticsearch:
+  hosts: ["mock-es:9200"]
+  protocol: "http"
+  allow_older_versions: true
+
+http.enabled: true
+http.host: "0.0.0.0"
+http.port: 5066
+http.pprof.enabled: true
+
+logging.level: warning
+logging.to_files: false
+
+queue.mem:
+  events: 4096
+  flush.min_events: 1024
+  flush.timeout: 1s
