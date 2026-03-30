@@ -117,8 +117,8 @@
         const runDataMap = {};
         const loadPromises = runs.map(async (run) => {
           try {
-            const data = await fetchJSON(`data/runs/${run.id}.json`);
-            runDataMap[run.id] = data;
+            const raw = await fetchJSON(`data/runs/${run.id}.json`);
+            runDataMap[run.id] = raw.run_data || raw;
           } catch (e) {
             console.warn(`Failed to load run ${run.id}:`, e);
           }

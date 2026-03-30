@@ -146,7 +146,8 @@
       }
 
       try {
-        runData = await fetchJSON(`data/runs/${runId}.json`);
+        const raw = await fetchJSON(`data/runs/${runId}.json`);
+        runData = raw.run_data || raw;
 
         document.title = `Run #${runId} - beats-bench`;
         document.getElementById('run-subtitle').textContent =
