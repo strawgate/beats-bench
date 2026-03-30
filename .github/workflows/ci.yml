@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Lint
+        run: uv run ruff check src/ tests/
+      - name: Format check
+        run: uv run ruff format --check src/ tests/
+      - name: Test
+        run: uv run pytest -v
+
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - run: cd dashboard && npm ci
+      - name: Type check
+        run: cd dashboard && npx tsc --noEmit
+      - name: Build
+        run: cd dashboard && npm run build
+
+  workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint
+        uses: reviewdog/action-actionlint@v1
+
+  mock-es:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: false
+      - name: Build mock-es
+        run: cd mock-es && go build .
+      - name: Vet mock-es
+        run: cd mock-es && go vet .
