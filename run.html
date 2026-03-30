@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run Details - beats-bench</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <a href="index.html" class="back-link">&larr; Back to overview</a>
+
+    <div class="header">
+      <h1>Run Details</h1>
+      <p id="run-subtitle">Loading...</p>
+    </div>
+
+    <div id="loading" class="loading">Loading run data</div>
+    <div id="error" class="error" style="display:none"></div>
+    <div id="content" style="display:none">
+
+      <!-- Summary header -->
+      <div class="run-header" id="run-header"></div>
+
+      <!-- Scenario tabs -->
+      <div class="scenario-tabs" id="scenario-tabs"></div>
+
+      <!-- EPS comparison bars -->
+      <div class="card" id="eps-card">
+        <h2>EPS Comparison</h2>
+        <div class="chart-container" style="border:none;box-shadow:none;padding:0">
+          <canvas id="eps-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Time-series charts (from samples) -->
+      <div class="card" id="timeseries-section">
+        <h2>Time-Series (Measurement Window)</h2>
+        <div class="chart-grid" id="timeseries-charts"></div>
+      </div>
+
+      <!-- Resource comparison table -->
+      <div class="card" id="resource-section">
+        <h2>Resource Comparison</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>CPU</th>
+              <th>Variant</th>
+              <th class="num">Alloc (MB)</th>
+              <th class="num">RSS (MB)</th>
+              <th class="num">Alloc/event</th>
+              <th class="num">Bytes/event</th>
+              <th class="num">Goroutines</th>
+            </tr>
+          </thead>
+          <tbody id="resource-table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Mock-ES stats table -->
+      <div class="card" id="mock-es-section">
+        <h2>Mock-ES Sink Stats</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>CPU</th>
+              <th>Variant</th>
+              <th class="num">Docs</th>
+              <th class="num">Batches</th>
+              <th class="num">Avg Batch</th>
+              <th class="num">Bytes (MB)</th>
+              <th class="num">Docs/sec</th>
+            </tr>
+          </thead>
+          <tbody id="mock-es-table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Profile links -->
+      <div class="card">
+        <h2>Profiles</h2>
+        <p style="color:var(--text-muted); font-size:14px;">
+          CPU and allocation profiles are available as workflow artifacts.
+          <a id="artifacts-link" href="#" style="color:var(--accent)">View on GitHub Actions</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const BASE_COLOR = 'rgb(37, 99, 235)';
+    const BASE_COLOR_BG = 'rgba(37, 99, 235, 0.3)';
+    const PR_COLOR = 'rgb(22, 163, 74)';
+    const PR_COLOR_BG = 'rgba(22, 163, 74, 0.3)';
+
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+    const textColor = isDark ? '#8b949e' : '#656d76';
+
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+
+    let runData = null;
+    let activeScenario = null;
+    let activeCpu = null;
+    let charts = [];
+
+    async function fetchJSON(url) {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`Failed to load ${url}: ${resp.status}`);
+      return resp.json();
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatNum(val, decimals) {
+      if (val == null) return 'N/A';
+      if (decimals != null) return val.toFixed(decimals);
+      return val.toLocaleString();
+    }
+
+    function getRunId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('id');
+    }
+
+    async function init() {
+      const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const contentEl = document.getElementById('content');
+
+      const runId = getRunId();
+      if (!runId) {
+        loadingEl.style.display = 'none';
+        errorEl.textContent = 'No run ID specified. Use ?id=<run-id>';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        runData = await fetchJSON(`data/runs/${runId}.json`);
+
+        document.title = `Run #${runId} - beats-bench`;
+        document.getElementById('run-subtitle').textContent =
+          `Run #${runId} - ${formatDate(runData.date)}`;
+
+        // Artifacts link
+        document.getElementById('artifacts-link').href =
+          `https://github.com/strawgate/beats-bench/actions/runs/${runId}`;
+
+        renderHeader();
+        renderScenarioTabs();
+        renderAll();
+
+        loadingEl.style.display = 'none';
+        contentEl.style.display = 'block';
+      } catch (e) {
+        loadingEl.style.display = 'none';
+        errorEl.textContent = 'Failed to load run data: ' + e.message;
+        errorEl.style.display = 'block';
+      }
+    }
+
+    function renderHeader() {
+      const el = document.getElementById('run-header');
+      el.innerHTML = `
+        <div class="stat">
+          <div class="stat-label">Base</div>
+          <div class="stat-value"><code>${runData.base_ref}</code></div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${runData.base_repo || ''}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">PR</div>
+          <div class="stat-value"><code>${runData.pr_ref}</code></div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${runData.pr_repo || ''}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Date</div>
+          <div class="stat-value">${formatDate(runData.date)}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Run ID</div>
+          <div class="stat-value"><a href="https://github.com/strawgate/beats-bench/actions/runs/${runData.id}" style="color:var(--accent)">#${runData.id}</a></div>
+        </div>
+      `;
+    }
+
+    function renderScenarioTabs() {
+      const tabs = document.getElementById('scenario-tabs');
+      const scenarios = Object.keys(runData.scenarios || {});
+      if (scenarios.length === 0) return;
+
+      // Add "All" tab
+      let html = `<button class="scenario-tab active" data-scenario="all">All</button>`;
+      for (const s of scenarios) {
+        for (const cpu of Object.keys(runData.scenarios[s])) {
+          html += `<button class="scenario-tab" data-scenario="${s}" data-cpu="${cpu}">${s} (${cpu} CPU)</button>`;
+        }
+      }
+      tabs.innerHTML = html;
+
+      tabs.addEventListener('click', (e) => {
+        const btn = e.target.closest('.scenario-tab');
+        if (!btn) return;
+        tabs.querySelectorAll('.scenario-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeScenario = btn.dataset.scenario === 'all' ? null : btn.dataset.scenario;
+        activeCpu = btn.dataset.cpu || null;
+        renderAll();
+      });
+    }
+
+    function getFilteredScenarios() {
+      const result = [];
+      for (const [scenario, cpuData] of Object.entries(runData.scenarios || {})) {
+        for (const [cpu, metrics] of Object.entries(cpuData)) {
+          if (activeScenario && (scenario !== activeScenario || cpu !== activeCpu)) continue;
+          result.push({ scenario, cpu, metrics });
+        }
+      }
+      return result;
+    }
+
+    function renderAll() {
+      // Destroy existing charts
+      charts.forEach(c => c.destroy());
+      charts = [];
+
+      const filtered = getFilteredScenarios();
+      renderEPSChart(filtered);
+      renderTimeSeries(filtered);
+      renderResourceTable(filtered);
+      renderMockESTable(filtered);
+    }
+
+    function renderEPSChart(filtered) {
+      const canvas = document.getElementById('eps-chart');
+      const ctx = canvas.getContext('2d');
+
+      const labels = filtered.map(f => `${f.scenario}\n(${f.cpu} CPU)`);
+      const baseAvgs = filtered.map(f => {
+        const v = f.metrics.base_eps;
+        return v.length > 0 ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : 0;
+      });
+      const prAvgs = filtered.map(f => {
+        const v = f.metrics.pr_eps;
+        return v.length > 0 ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : 0;
+      });
+
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Base EPS',
+              data: baseAvgs,
+              backgroundColor: BASE_COLOR_BG,
+              borderColor: BASE_COLOR,
+              borderWidth: 2,
+            },
+            {
+              label: 'PR EPS',
+              data: prAvgs,
+              backgroundColor: PR_COLOR_BG,
+              borderColor: PR_COLOR,
+              borderWidth: 2,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} events/sec`,
+              },
+            },
+          },
+          scales: {
+            y: {
+              title: { display: true, text: 'Events/sec' },
+              beginAtZero: false,
+              grid: { color: gridColor },
+            },
+            x: {
+              grid: { display: false },
+            },
+          },
+        },
+      });
+      charts.push(chart);
+    }
+
+    function renderTimeSeries(filtered) {
+      const container = document.getElementById('timeseries-charts');
+      container.innerHTML = '';
+
+      for (const { scenario, cpu, metrics } of filtered) {
+        const prefix = `${scenario} (${cpu} CPU)`;
+
+        // Get the last run for each variant (the final measurement run)
+        const baseRun = metrics.base_runs && metrics.base_runs.length > 0
+          ? metrics.base_runs[metrics.base_runs.length - 1]
+          : null;
+        const prRun = metrics.pr_runs && metrics.pr_runs.length > 0
+          ? metrics.pr_runs[metrics.pr_runs.length - 1]
+          : null;
+
+        const baseSamples = baseRun ? (baseRun.samples || []) : [];
+        const prSamples = prRun ? (prRun.samples || []) : [];
+
+        if (baseSamples.length === 0 && prSamples.length === 0) continue;
+
+        // Compute EPS between consecutive samples (delta events / delta time)
+        function computeEPSFromSamples(samples) {
+          if (samples.length < 2) return { labels: [], data: [] };
+          const labels = [];
+          const data = [];
+          for (let i = 1; i < samples.length; i++) {
+            const dt = samples[i].elapsed_sec - samples[i - 1].elapsed_sec;
+            const de = samples[i].events - samples[i - 1].events;
+            labels.push(samples[i].elapsed_sec + 's');
+            data.push(dt > 0 ? Math.round(de / dt) : 0);
+          }
+          return { labels, data };
+        }
+
+        function extractMetric(samples, key, scale) {
+          return {
+            labels: samples.map(s => s.elapsed_sec + 's'),
+            data: samples.map(s => scale ? (s[key] / scale) : s[key]),
+          };
+        }
+
+        // --- EPS over time ---
+        const baseEPS = computeEPSFromSamples(baseSamples);
+        const prEPS = computeEPSFromSamples(prSamples);
+        const epsLabels = baseEPS.labels.length >= prEPS.labels.length ? baseEPS.labels : prEPS.labels;
+        createTimeChart(container, `${prefix} - EPS over time`, epsLabels, baseEPS.data, prEPS.data, 'Events/sec');
+
+        // --- Memory (alloc) over time ---
+        const baseMem = extractMetric(baseSamples, 'mem_bytes', 1024 * 1024);
+        const prMem = extractMetric(prSamples, 'mem_bytes', 1024 * 1024);
+        const memLabels = baseMem.labels.length >= prMem.labels.length ? baseMem.labels : prMem.labels;
+        createTimeChart(container, `${prefix} - Heap Alloc (MB)`, memLabels, baseMem.data, prMem.data, 'MB');
+
+        // --- RSS over time ---
+        const baseRSS = extractMetric(baseSamples, 'rss_bytes', 1024 * 1024);
+        const prRSS = extractMetric(prSamples, 'rss_bytes', 1024 * 1024);
+        const rssLabels = baseRSS.labels.length >= prRSS.labels.length ? baseRSS.labels : prRSS.labels;
+        createTimeChart(container, `${prefix} - RSS (MB)`, rssLabels, baseRSS.data, prRSS.data, 'MB');
+      }
+
+      if (container.children.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted)">No time-series sample data available for this run.</p>';
+      }
+    }
+
+    function createTimeChart(container, title, labels, baseData, prData, yLabel) {
+      const div = document.createElement('div');
+      div.className = 'chart-container';
+      div.innerHTML = `<h3>${title}</h3><canvas></canvas>`;
+      container.appendChild(div);
+
+      const chart = new Chart(div.querySelector('canvas'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Base',
+              data: baseData,
+              borderColor: BASE_COLOR,
+              backgroundColor: BASE_COLOR_BG,
+              borderWidth: 2,
+              pointRadius: 3,
+              tension: 0.2,
+              fill: false,
+            },
+            {
+              label: 'PR',
+              data: prData,
+              borderColor: PR_COLOR,
+              backgroundColor: PR_COLOR_BG,
+              borderWidth: 2,
+              pointRadius: 3,
+              tension: 0.2,
+              fill: false,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const v = ctx.parsed.y;
+                  return `${ctx.dataset.label}: ${v != null ? (yLabel === 'MB' ? v.toFixed(1) : v.toLocaleString()) : 'N/A'} ${yLabel}`;
+                },
+              },
+            },
+            legend: { position: 'top' },
+          },
+          scales: {
+            y: {
+              title: { display: true, text: yLabel },
+              beginAtZero: false,
+              grid: { color: gridColor },
+            },
+            x: {
+              title: { display: true, text: 'Elapsed' },
+              grid: { display: false },
+            },
+          },
+        },
+      });
+      charts.push(chart);
+    }
+
+    function renderResourceTable(filtered) {
+      const tbody = document.getElementById('resource-table-body');
+      let html = '';
+
+      for (const { scenario, cpu, metrics } of filtered) {
+        for (const [label, runsKey] of [['base', 'base_runs'], ['pr', 'pr_runs']]) {
+          const runs = metrics[runsKey] || [];
+          if (runs.length === 0) continue;
+          const last = runs[runs.length - 1];
+          html += `<tr>
+            <td>${scenario}</td>
+            <td>${cpu}</td>
+            <td><span class="badge badge-${label}">${label}</span></td>
+            <td class="num">${formatNum(last.memory_alloc_mb, 1)}</td>
+            <td class="num">${formatNum(last.memory_rss_mb, 1)}</td>
+            <td class="num">${formatNum(last.alloc_per_event)}</td>
+            <td class="num">${formatNum(last.bytes_per_event)}</td>
+            <td class="num">${formatNum(last.goroutines)}</td>
+          </tr>`;
+        }
+      }
+
+      tbody.innerHTML = html || '<tr><td colspan="8" style="color:var(--text-muted)">No resource data</td></tr>';
+    }
+
+    function renderMockESTable(filtered) {
+      const tbody = document.getElementById('mock-es-table-body');
+      let html = '';
+
+      for (const { scenario, cpu, metrics } of filtered) {
+        for (const [label, runsKey] of [['base', 'base_runs'], ['pr', 'pr_runs']]) {
+          const runs = metrics[runsKey] || [];
+          if (runs.length === 0) continue;
+          const last = runs[runs.length - 1];
+          html += `<tr>
+            <td>${scenario}</td>
+            <td>${cpu}</td>
+            <td><span class="badge badge-${label}">${label}</span></td>
+            <td class="num">${formatNum(last.mock_docs)}</td>
+            <td class="num">${formatNum(last.mock_batches)}</td>
+            <td class="num">${formatNum(last.mock_avg_batch, 0)}</td>
+            <td class="num">${formatNum(last.mock_bytes_mb, 0)}</td>
+            <td class="num">${formatNum(last.mock_docs_per_sec, 0)}</td>
+          </tr>`;
+        }
+      }
+
+      tbody.innerHTML = html || '<tr><td colspan="8" style="color:var(--text-muted)">No mock-ES data</td></tr>';
+    }
+
+    init();
+  </script>
+</body>
+</html>
