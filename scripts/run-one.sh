@@ -64,8 +64,21 @@ for i in $(seq 1 30); do
 done
 curl -sf http://localhost:5066/stats >/dev/null 2>&1 || die "filebeat stats endpoint did not start"
 
-# ---------- stabilize ----------
-sleep 5
+# ---------- wait for steady state ----------
+# Wait until events are actually being acked (output connected, queue filling).
+# Then wait for GC to settle (~3 GC cycles at typical pace).
+for i in $(seq 1 60); do
+  ACKED=$(curl -s http://localhost:5066/stats | json_field "['libbeat']['output']['events']['acked']" || echo 0)
+  [ "$ACKED" -gt 0 ] 2>/dev/null && break
+  sleep 1
+done
+sleep 5  # Let GC pacer stabilize after initial burst
+
+# Reset mock-es counters so profile-run stats start clean
+curl -sf -XPOST http://localhost:9200/_mock/reset >/dev/null 2>&1 || true
+
+# Capture baseline allocs profile (for delta computation later)
+curl -s http://localhost:5066/debug/pprof/allocs -o /dev/null 2>/dev/null || true
 
 # ---------- measure ----------
 START_EVENTS=$(curl -s http://localhost:5066/stats | json_field "['libbeat']['pipeline']['events']['total']")
