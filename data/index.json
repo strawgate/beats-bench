@@ -1,6 +1,77 @@
 {
   "runs": [
     {
+      "id": "23887055438",
+      "date": "2026-04-02T06:31:01Z",
+      "base_ref": "main",
+      "pr_ref": "main",
+      "base_repo": "elastic/beats",
+      "pr_repo": "elastic/beats",
+      "type": "nightly",
+      "pr_number": null,
+      "commit_sha": "543bab1cff78bcee523d6a5f3be93e52dd16e8a7",
+      "summary": {
+        "enrichment-only": {
+          "0.5": {
+            "base_avg": 10107,
+            "pr_avg": 10016,
+            "delta_pct": -0.9
+          },
+          "1.0": {
+            "base_avg": 20245,
+            "pr_avg": 20056,
+            "delta_pct": -0.9
+          }
+        },
+        "full-agent-dissect": {
+          "0.5": {
+            "base_avg": 7334,
+            "pr_avg": 7347,
+            "delta_pct": 0.2
+          },
+          "1.0": {
+            "base_avg": 15127,
+            "pr_avg": 15003,
+            "delta_pct": -0.8
+          }
+        },
+        "full-agent-rename-only": {
+          "0.5": {
+            "base_avg": 9260,
+            "pr_avg": 9267,
+            "delta_pct": 0.1
+          },
+          "1.0": {
+            "base_avg": 18620,
+            "pr_avg": 18686,
+            "delta_pct": 0.4
+          }
+        },
+        "passthrough": {
+          "0.5": {
+            "base_avg": 29016,
+            "pr_avg": 28940,
+            "delta_pct": -0.3
+          },
+          "1.0": {
+            "base_avg": 75726,
+            "pr_avg": 75745,
+            "delta_pct": 0.0
+          }
+        }
+      },
+      "scenarios": [
+        "enrichment-only",
+        "full-agent-dissect",
+        "full-agent-rename-only",
+        "passthrough"
+      ],
+      "cpus": [
+        "0.5",
+        "1.0"
+      ]
+    },
+    {
       "id": "23835247247",
       "date": "2026-04-01T06:38:50Z",
       "base_ref": "main",
