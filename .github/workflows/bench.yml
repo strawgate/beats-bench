@@ -233,12 +233,14 @@ jobs:
       - name: Post comparison to job summary
         if: inputs.pr_number != '' && steps.compare.outputs.summary != ''
         run: |
-          echo "## Benchmark Comparison — PR #${{ inputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Ref:** \`${{ inputs.ref }}\` @ \`${{ inputs.beats_repo || 'elastic/beats' }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Regression detected:** ${{ steps.compare.outputs.has-regression }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.compare.outputs.summary }}" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Benchmark Comparison — PR #${{ inputs.pr_number }}"
+            echo ""
+            echo "**Ref:** \`${{ inputs.ref }}\` @ \`${{ inputs.beats_repo || 'elastic/beats' }}\`"
+            echo "**Regression detected:** ${{ steps.compare.outputs.has-regression }}"
+            echo ""
+            echo "${{ steps.compare.outputs.summary }}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload pprof artifacts
         uses: actions/upload-artifact@v4
