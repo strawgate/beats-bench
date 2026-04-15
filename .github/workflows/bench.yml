@@ -29,6 +29,14 @@ on:
         description: "Seconds to measure each run"
         required: true
         default: "60"
+      pr_number:
+        description: "PR number (optional — enables comparison against baseline)"
+        required: false
+        default: ""
+      comparison_threshold:
+        description: "Regression threshold percentage for compare"
+        required: false
+        default: "5"
 
 permissions:
   contents: write
@@ -169,7 +177,7 @@ jobs:
           retention-days: 30
 
   # ---------------------------------------------------------------
-  # Collect results, stash with benchkit, then aggregate
+  # Collect results, stash with benchkit, then aggregate or compare
   # ---------------------------------------------------------------
   publish:
     needs: bench
@@ -196,6 +204,7 @@ jobs:
           pathlib.Path('bench-results.json').write_text(json.dumps(entries, indent=2))
           print(f'Merged {len(entries)} entries from {len(list(pathlib.Path(\"all-results\").rglob(\"results.json\")))} files')
           "
+          cat bench-results.json
 
       - name: Stash results to bench-data branch
         uses: strawgate/o11ykit/octo11y/actions/stash@main-dist
@@ -208,6 +217,28 @@ jobs:
         uses: strawgate/o11ykit/octo11y/actions/aggregate@main-dist
         with:
           data-branch: bench-data
+
+      - name: Compare against baseline
+        if: inputs.pr_number != ''
+        id: compare
+        uses: strawgate/o11ykit/octo11y/actions/compare@main-dist
+        with:
+          results: bench-results.json
+          format: benchmark-action
+          data-branch: bench-data
+          baseline-runs: "5"
+          threshold: ${{ inputs.comparison_threshold || '5' }}
+          fail-on-regression: "false"
+
+      - name: Post comparison to job summary
+        if: inputs.pr_number != '' && steps.compare.outputs.summary != ''
+        run: |
+          echo "## Benchmark Comparison — PR #${{ inputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Ref:** \`${{ inputs.ref }}\` @ \`${{ inputs.beats_repo || 'elastic/beats' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Regression detected:** ${{ steps.compare.outputs.has-regression }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.compare.outputs.summary }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload pprof artifacts
         uses: actions/upload-artifact@v4
