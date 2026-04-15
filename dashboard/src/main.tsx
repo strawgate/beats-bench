@@ -11,8 +11,8 @@ render(
   <Dashboard
     source={source}
     labels={{
-      title: 'Filebeat Pipeline Benchmarks',
-      subtitle: 'Automated throughput and resource tracking for Elastic Filebeat pipelines',
+      brand: 'beats-bench',
+      heroTitle: 'Filebeat Pipeline Benchmarks',
     }}
     regressionThreshold={5}
     regressionWindow={5}
