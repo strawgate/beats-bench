@@ -1,5 +1,25 @@
 import { render } from 'preact';
-import { App } from './app';
-import './index.css';
+import { Dashboard } from '@benchkit/chart';
+import '@benchkit/chart/css';
 
-render(<App />, document.getElementById('app')!);
+const source = {
+  owner: 'strawgate',
+  repo: 'beats-bench',
+};
+
+render(
+  <Dashboard
+    source={source}
+    labels={{
+      title: 'Filebeat Pipeline Benchmarks',
+      subtitle: 'Automated throughput and resource tracking for Elastic Filebeat pipelines',
+    }}
+    regressionThreshold={5}
+    regressionWindow={5}
+    maxRuns={30}
+    commitHref={(sha) =>
+      `https://github.com/elastic/beats/commit/${sha}`
+    }
+  />,
+  document.getElementById('app')!,
+);

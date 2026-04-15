@@ -5,7 +5,7 @@
 | Tool | Version | Purpose |
 |---|---|---|
 | Docker | latest | Run filebeat + mock-es containers |
-| Python | 3.11+ | Benchmark runner, summarization |
+| Python | 3.11+ | Benchmark runner |
 | uv | latest | Python project/dependency management |
 | Node.js | 22+ | Dashboard development |
 | Go | 1.23+ | Build mock-es and log-generator |
@@ -14,22 +14,20 @@
 
 ```
 beats-bench/
-  src/beats_bench/       Python package — benchmark runner, data collection, summarization
+  src/beats_bench/       Python package — benchmark runner, data collection
     cli.py                 CLI entry point (beats-bench command)
     runner.py              Runs filebeat in Docker, collects metrics
-    scenario.py            Scenario config loading and validation
+    benchmark.py           Orchestrates warmup + measurement runs, outputs benchmark-action JSON
     docker.py              Docker container management
-    stats.py               Statistical analysis of benchmark results
+    stats.py               Filebeat and mock-es stats parsing
     profiler.py            pprof profile collection
-    summarize.py           Markdown summary and data aggregation
-  dashboard/             Preact + TypeScript app — benchmark visualization
+  dashboard/             Preact app using @benchkit/chart — benchmark visualization
   pipelines/             Filebeat YAML configs — one per benchmark scenario
   mock-es/               Go mock Elasticsearch server — accepts _bulk, returns stats
   log-generator/         Go log line generator — feeds TCP/UDP/file inputs
   scripts/               Shell scripts — build.sh, local-run.sh
   tests/                 pytest tests for the Python package
-  data/                  Local data directory (run results)
-  .github/workflows/    GitHub Actions — bench.yml, deploy-dashboard.yml
+  .github/workflows/    GitHub Actions — bench.yml, deploy-dashboard.yml, ci.yml
   pyproject.toml         Python project config with ruff lint rules
 ```
 
@@ -59,13 +57,13 @@ Ruff enforces strict rules (see `pyproject.toml` for the full rule set). All fun
 ### Adding a new metric
 
 1. Collect the metric in `runner.py` (from Docker stats, pprof, or mock-es `/stats`)
-2. Add statistical processing in `stats.py`
-3. Include it in the summary output in `summarize.py`
+2. Add it to `RunResult.to_dict()` in `runner.py`
+3. Add a benchmark-action entry in `benchmark.py` (`_to_benchmark_entries`)
 4. Add a test in `tests/`
 
 ## Dashboard
 
-The dashboard is a Preact + TypeScript + Chart.js app built with Vite. It fetches data from the `bench-data` branch at runtime via `raw.githubusercontent.com`.
+The dashboard uses [`@benchkit/chart`](https://github.com/strawgate/o11ykit) to render benchmark trends, regressions, and run details. It fetches data from the `bench-data` branch at runtime via `raw.githubusercontent.com`.
 
 ### Run locally
 
@@ -82,11 +80,7 @@ cd dashboard
 npm run build
 ```
 
-Output goes to `dashboard/dist/`.
-
-### Adding a component
-
-Components live in `dashboard/src/`. The app uses hash-based routing via `useState` -- there is no external router. Data types are defined inline.
+Output goes to `dashboard/dist/`. The `Dashboard` component from `@benchkit/chart` handles all data fetching and visualization -- the app itself is minimal.
 
 ## Pipelines
 
@@ -101,8 +95,9 @@ Each YAML file in `pipelines/` defines one benchmark scenario. A pipeline config
    - Elasticsearch output pointing to `mock-es:9200`
    - HTTP endpoint enabled (for health checks)
    - pprof enabled via `http.pprof.enabled: true`
-3. Add the scenario name to the `scenarios` input default in `.github/workflows/bench.yml`
-4. Test locally with `./scripts/local-run.sh main main your-scenario 1.0 3`
+3. Add metadata to `pipelines/scenarios.json`
+4. Add the scenario name to the `scenarios` input default in `.github/workflows/bench.yml`
+5. Test locally with `./scripts/local-run.sh main your-scenario 1.0 3`
 
 ## Mock-ES
 
@@ -135,9 +130,9 @@ The main benchmark workflow runs on schedule (daily) and on workflow dispatch.
 
 **Jobs:**
 
-1. **build** -- Clones the beats repo at both refs, compiles filebeat in Docker, caches binaries by commit SHA
-2. **bench** (matrix) -- Runs each scenario x CPU combination. Uses the Python runner to start mock-es + filebeat in Docker, collects metrics
-3. **summarize** -- Aggregates results from all matrix jobs, generates markdown summary, pushes data to `bench-data` branch
+1. **build** -- Clones the beats repo at the specified ref, compiles filebeat, caches binaries by commit SHA
+2. **bench** (matrix) -- Runs each scenario x CPU combination. Uses the Python runner to start mock-es + filebeat in Docker, collects metrics, outputs benchmark-action JSON
+3. **publish** -- Merges results from all matrix jobs, stashes to `bench-data` via benchkit, aggregates index and series data
 
 ### deploy-dashboard.yml
 
@@ -148,20 +143,19 @@ Triggered on pushes to `main` that change `dashboard/`. Builds the Preact app an
 ### Using the convenience script
 
 ```bash
-./scripts/local-run.sh <base-ref> <pr-ref> <scenario> <cpus> <runs>
+./scripts/local-run.sh <ref> <scenario> <cpus> <runs>
 
-# Example: compare a feature branch against main
-./scripts/local-run.sh main my-feature-branch full-agent-dissect 1.0 3
+# Example: benchmark the main branch
+./scripts/local-run.sh main full-agent-dissect 1.0 3
 ```
 
-The script builds both filebeat binaries, then runs the benchmark.
+The script builds the filebeat binary, then runs the benchmark.
 
 ### Using the Python CLI directly
 
 ```bash
-uv run beats-bench run-scenario \
-  --base-binary ./bin/base/filebeat \
-  --pr-binary ./bin/pr/filebeat \
+uv run beats-bench run-benchmark \
+  --binary ./bin/bench/filebeat \
   --config ./pipelines/full-agent-dissect.yml \
   --mock-es ./bin/mock-es \
   --cpus 1.0 \
@@ -172,20 +166,24 @@ uv run beats-bench run-scenario \
 
 ## Data Model
 
-Benchmark results are stored on the `bench-data` branch (not `main`). The dashboard fetches this data at runtime.
+Benchmark results are stored on the `bench-data` branch (not `main`) in OTLP metrics format, managed by [benchkit](https://github.com/strawgate/o11ykit) actions.
 
 ### Structure
 
 ```
 bench-data branch:
-  index.json            List of all runs with metadata (date, refs, scenarios)
-  runs/
-    {run-id}.json       Full results for one workflow run
+  data/
+    index.json                          All runs with metadata
+    index/
+      refs.json                         Runs grouped by git ref
+      prs.json                          Runs grouped by PR
+      metrics.json                      Available metrics
+    runs/
+      {run-id}/benchmark.otlp.json      OTLP metrics for one workflow run
+    series/
+      {metric}.json                     Time-series data per metric
+    views/
+      runs/{run-id}/detail.json         Pre-computed run detail views
 ```
 
-Each run JSON contains:
-- Workflow metadata (refs, repos, commit SHAs)
-- Per-scenario results (events/sec, CPU usage, memory, pprof data)
-- Statistical summaries (mean, stddev, min, max across repeated runs)
-
-The summarize job pushes new data to this branch after each benchmark completes. The dashboard reads `index.json` to list available runs, then fetches individual run files on demand.
+The benchkit `stash` action writes per-run OTLP files, `aggregate` builds the derived index/series/views, and `@benchkit/chart` reads them at runtime for the dashboard.
