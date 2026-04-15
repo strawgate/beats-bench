@@ -5,22 +5,14 @@ on:
     - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
-      base_ref:
-        description: "Base ref (branch, tag, or commit SHA) — typically elastic/beats main"
-        required: true
-        default: "main"
-      pr_ref:
-        description: "PR ref (branch, tag, or commit SHA) — the change to benchmark"
+      ref:
+        description: "Git ref to benchmark (branch, tag, or commit SHA)"
         required: true
         default: "main"
       beats_repo:
         description: "Beats repo (owner/repo)"
         required: true
         default: "elastic/beats"
-      pr_repo:
-        description: "PR repo (owner/repo) — if different from beats_repo"
-        required: false
-        default: ""
       scenarios:
         description: "Comma-separated pipeline scenarios"
         required: true
@@ -30,7 +22,7 @@ on:
         required: true
         default: "0.5,1.0"
       runs_per_scenario:
-        description: "Number of measurement runs per binary per scenario"
+        description: "Number of measurement runs per scenario"
         required: true
         default: "3"
       measurement_seconds:
@@ -38,36 +30,30 @@ on:
         required: true
         default: "60"
       pr_number:
-        description: "PR number being benchmarked (optional)"
+        description: "PR number (optional — enables comparison against baseline)"
         required: false
         default: ""
-      run_type:
-        description: "Run type: pr or nightly"
+      comparison_threshold:
+        description: "Regression threshold percentage for compare"
         required: false
-        default: "pr"
+        default: "5"
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   # ---------------------------------------------------------------
-  # Build both binaries
+  # Build filebeat
   # ---------------------------------------------------------------
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        variant: [base, pr]
     steps:
       - name: Resolve commit SHA
         id: resolve
         run: |
-          REPO=${{ matrix.variant == 'pr' && (inputs.pr_repo || inputs.beats_repo || 'elastic/beats') || (inputs.beats_repo || 'elastic/beats') }}
-          REF=${{ matrix.variant == 'pr' && (inputs.pr_ref || 'main') || (inputs.base_ref || 'main') }}
+          REPO="${{ inputs.beats_repo || 'elastic/beats' }}"
+          REF="${{ inputs.ref || 'main' }}"
           SHA=$(git ls-remote "https://github.com/${REPO}.git" "${REF}" | head -1 | cut -f1)
-          # If REF is already a SHA (ls-remote returns empty), use it directly
           if [ -z "$SHA" ]; then SHA="$REF"; fi
           echo "sha=$SHA" >> $GITHUB_OUTPUT
           echo "Resolved $REF -> $SHA"
@@ -76,7 +62,7 @@ jobs:
         id: cache
         uses: actions/cache@v4
         with:
-          path: filebeat-${{ matrix.variant }}
+          path: filebeat
           key: filebeat-${{ steps.resolve.outputs.sha }}
 
       - name: Set up Go
@@ -90,26 +76,21 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
-          repository: ${{ matrix.variant == 'pr' && (inputs.pr_repo || inputs.beats_repo || 'elastic/beats') || (inputs.beats_repo || 'elastic/beats') }}
-          ref: ${{ matrix.variant == 'pr' && (inputs.pr_ref || 'main') || (inputs.base_ref || 'main') }}
+          repository: ${{ inputs.beats_repo || 'elastic/beats' }}
+          ref: ${{ inputs.ref || 'main' }}
           path: beats
 
       - name: Build filebeat
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd beats/x-pack/filebeat
-          CGO_ENABLED=0 GOFLAGS=-mod=mod go build -o ${{ github.workspace }}/filebeat-${{ matrix.variant }} .
-          echo "Build ID: $(go tool buildid ${{ github.workspace }}/filebeat-${{ matrix.variant }} | cut -c1-16)"
-
-      - name: Cache hit
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: echo "Using cached binary for ${{ steps.resolve.outputs.sha }}"
+          CGO_ENABLED=0 GOFLAGS=-mod=mod go build -o ${{ github.workspace }}/filebeat .
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: filebeat-${{ matrix.variant }}
-          path: filebeat-${{ matrix.variant }}
+          name: filebeat
+          path: filebeat
           retention-days: 1
 
   # ---------------------------------------------------------------
@@ -168,7 +149,7 @@ jobs:
 
       - name: Prepare
         run: |
-          chmod +x bin/filebeat-base/filebeat-base bin/filebeat-pr/filebeat-pr bin/mock-es/mock-es-bin
+          chmod +x bin/filebeat/filebeat bin/mock-es/mock-es-bin
           sudo cp bin/mock-es/mock-es-bin /usr/local/bin/mock-es
           sudo cp pipelines/${{ matrix.scenario }}.yml /tmp/fb-config.yml
           sudo chown root:root /tmp/fb-config.yml
@@ -178,9 +159,8 @@ jobs:
 
       - name: Run benchmarks
         run: |
-          uv run beats-bench run-scenario \
-            --base-binary bin/filebeat-base/filebeat-base \
-            --pr-binary bin/filebeat-pr/filebeat-pr \
+          uv run beats-bench run-benchmark \
+            --binary bin/filebeat/filebeat \
             --config /tmp/fb-config.yml \
             --mock-es /usr/local/bin/mock-es \
             --cpus ${{ matrix.cpu }} \
@@ -193,23 +173,20 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: results-${{ matrix.scenario }}-${{ matrix.cpu }}cpu
-          path: |
-            results/
+          path: results/
           retention-days: 30
 
   # ---------------------------------------------------------------
-  # Summarize all results, build site, deploy
+  # Collect results, stash with benchkit, then aggregate or compare
   # ---------------------------------------------------------------
-  summarize:
+  publish:
     needs: bench
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
 
       - name: Download bench results
         uses: actions/download-artifact@v4
@@ -217,66 +194,59 @@ jobs:
           pattern: results-*
           path: all-results
 
-      - name: Set up Go (for pprof)
-        uses: actions/setup-go@v5
+      - name: Merge results into single file
+        run: |
+          python3 -c "
+          import json, pathlib
+          entries = []
+          for f in sorted(pathlib.Path('all-results').rglob('results.json')):
+              entries.extend(json.loads(f.read_text()))
+          pathlib.Path('bench-results.json').write_text(json.dumps(entries, indent=2))
+          print(f'Merged {len(entries)} entries from {len(list(pathlib.Path(\"all-results\").rglob(\"results.json\")))} files')
+          "
+          cat bench-results.json
+
+      - name: Stash results to bench-data branch
+        uses: strawgate/o11ykit/octo11y/actions/stash@main-dist
         with:
-          go-version: "1.26"
-          cache: false
+          results: bench-results.json
+          format: benchmark-action
+          data-branch: bench-data
 
-      - name: Fetch existing data from bench-data branch
+      - name: Aggregate index and series
+        uses: strawgate/o11ykit/octo11y/actions/aggregate@main-dist
+        with:
+          data-branch: bench-data
+
+      - name: Compare against baseline
+        if: inputs.pr_number != ''
+        id: compare
+        uses: strawgate/o11ykit/octo11y/actions/compare@main-dist
+        with:
+          results: bench-results.json
+          format: benchmark-action
+          data-branch: bench-data
+          baseline-runs: "5"
+          threshold: ${{ inputs.comparison_threshold || '5' }}
+          fail-on-regression: "false"
+
+      - name: Post comparison to job summary
+        if: inputs.pr_number != '' && steps.compare.outputs.summary != ''
         run: |
-          git fetch origin bench-data:bench-data 2>/dev/null || true
-          mkdir -p site-data/runs
-          if git show bench-data:data/index.json > /dev/null 2>&1; then
-            git show bench-data:data/index.json > site-data/index.json
-            # Copy all existing run JSONs
-            for f in $(git ls-tree --name-only bench-data data/runs/ 2>/dev/null); do
-              git show "bench-data:$f" > "site-data/runs/$(basename $f)" 2>/dev/null || true
-            done
-          fi
+          {
+            echo "## Benchmark Comparison — PR #${{ inputs.pr_number }}"
+            echo ""
+            echo "**Ref:** \`${{ inputs.ref }}\` @ \`${{ inputs.beats_repo || 'elastic/beats' }}\`"
+            echo "**Regression detected:** ${{ steps.compare.outputs.has-regression }}"
+            echo ""
+            echo "${{ steps.compare.outputs.summary }}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Generate summary and site
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          uv run beats-bench summarize \
-            --results-dir all-results \
-            --existing-data site-data \
-            --output-dir _site \
-            --base-ref "${{ inputs.base_ref || 'main' }}" \
-            --pr-ref "${{ inputs.pr_ref || 'main' }}" \
-            --base-repo "${{ inputs.beats_repo || 'elastic/beats' }}" \
-            --pr-repo "${{ inputs.pr_repo || inputs.beats_repo || 'elastic/beats' }}" \
-            --runs-per-scenario "${{ inputs.runs_per_scenario || '3' }}" \
-            --measure-seconds "${{ inputs.measurement_seconds || '20' }}" \
-            --run-id "${{ github.run_id }}" \
-            --pr-number "${{ inputs.pr_number || '' }}" \
-            --run-type "${{ inputs.run_type || 'nightly' }}" \
-            --commit-sha "${{ github.sha }}" \
-            --pr-repo-owner "${{ inputs.beats_repo || 'elastic/beats' }}"
-
-      - name: Post summary to job
-        run: cat summary.md >> $GITHUB_STEP_SUMMARY
-
-      - name: Push data to bench-data branch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B bench-data origin/bench-data 2>/dev/null || git checkout --orphan bench-data
-          git rm -rf . 2>/dev/null || true
-          cp -r _site/data .
-          git add data/
-          git commit -m "Add benchmark data for run ${{ github.run_id }}" || true
-          git pull --rebase origin bench-data 2>/dev/null || true
-          git push origin bench-data
-
-      - name: Upload summary
+      - name: Upload pprof artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-summary
+          name: pprof-profiles
           path: |
-            summary.md
-            dashboard-data.json
-            all-results/**/*-diff.txt
             all-results/**/*.pprof
           retention-days: 90
+          if-no-files-found: ignore

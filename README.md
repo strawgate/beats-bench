@@ -1,6 +1,6 @@
 # beats-bench
 
-Filebeat pipeline benchmarking toolkit -- compare processor throughput between two commits using Docker-based benchmarks.
+Filebeat pipeline benchmarking toolkit -- track processor throughput and resource usage over time using Docker-based benchmarks and [benchkit](https://github.com/strawgate/o11ykit) for data management and visualization.
 
 ## Dashboard
 
@@ -11,8 +11,8 @@ View benchmark trends and compare results at the live dashboard:
 
 1. Go to [Actions -> Filebeat Pipeline Benchmark](../../actions/workflows/bench.yml)
 2. Click **Run workflow**
-3. Fill in the base and PR refs to compare
-4. Results appear in the job summary, artifacts, and dashboard
+3. Fill in the ref to benchmark
+4. Results are stashed to the `bench-data` branch, aggregated into trend data, and shown on the dashboard
 
 ## Pipeline Scenarios
 
@@ -36,10 +36,18 @@ View benchmark trends and compare results at the live dashboard:
 
 TCP/UDP/filestream scenarios require the `log-generator` tool to feed data into filebeat. Benchmark input scenarios are self-contained.
 
+## How It Works
+
+beats-bench uses [benchkit](https://github.com/strawgate/o11ykit) (from o11ykit) to handle the data pipeline:
+
+1. **Benchmark** -- The Python runner executes filebeat with Docker, measures throughput and resource usage, and outputs results in [benchmark-action](https://github.com/benchmark-action/github-action-benchmark) JSON format.
+2. **Stash** -- The `@benchkit` stash action commits results as OTLP metrics to the `bench-data` branch.
+3. **Aggregate** -- The `@benchkit` aggregate action rebuilds the index and time-series files used by the dashboard.
+4. **Visualize** -- The dashboard uses `@benchkit/chart` to render trend charts, regression detection, and run comparisons from the `bench-data` branch.
+
 ## Results
 
-- **Dashboard**: [strawgate.github.io/beats-bench](https://strawgate.github.io/beats-bench/) -- trend charts and run comparison
-- **Job summary**: Posted to each workflow run's Summary tab
+- **Dashboard**: [strawgate.github.io/beats-bench](https://strawgate.github.io/beats-bench/) -- trend charts, regression detection, run details
 - **Artifacts**: CPU and allocation pprof profiles attached to each workflow run
 
 ## Local Development

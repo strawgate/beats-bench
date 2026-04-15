@@ -1,23 +1,21 @@
 #!/usr/bin/env bash
-# local-run.sh — Build and benchmark two beats refs locally.
+# local-run.sh — Build and benchmark a beats ref locally.
 #
 # Usage:
-#   ./scripts/local-run.sh [base-ref] [pr-ref] [scenario] [cpus] [runs]
+#   ./scripts/local-run.sh [ref] [scenario] [cpus] [runs]
 #
 # Examples:
-#   ./scripts/local-run.sh main my-feature-branch full-agent-dissect 1.0 3
-#   ./scripts/local-run.sh main main passthrough 0.5 2  # sanity check
+#   ./scripts/local-run.sh main full-agent-dissect 1.0 3
+#   ./scripts/local-run.sh my-feature-branch passthrough 0.5 2
 
 set -euo pipefail
 
-BASE_REF="${1:-main}"
-PR_REF="${2:-main}"
-SCENARIO="${3:-full-agent-dissect}"
-CPUS="${4:-1.0}"
-RUNS="${5:-3}"
-MEASURE="${6:-20}"
-BASE_REPO="${BASE_REPO:-https://github.com/elastic/beats.git}"
-PR_REPO="${PR_REPO:-$BASE_REPO}"
+REF="${1:-main}"
+SCENARIO="${2:-full-agent-dissect}"
+CPUS="${3:-1.0}"
+RUNS="${4:-3}"
+MEASURE="${5:-20}"
+BEATS_REPO="${BEATS_REPO:-https://github.com/elastic/beats.git}"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BENCH_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -25,15 +23,13 @@ BENCH_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 echo "=========================================="
 echo "  Local Filebeat Benchmark"
 echo "=========================================="
-echo "  Base: $BASE_REF @ $BASE_REPO"
-echo "  PR:   $PR_REF @ $PR_REPO"
+echo "  Ref:      $REF @ $BEATS_REPO"
 echo "  Scenario: $SCENARIO"
 echo "  CPUs: $CPUS, Runs: $RUNS, Measure: ${MEASURE}s"
 echo ""
 
-# Build both binaries
-"$SCRIPT_DIR/build.sh" "$BASE_REPO" "$BASE_REF" "$BENCH_ROOT/bin/base"
-"$SCRIPT_DIR/build.sh" "$PR_REPO" "$PR_REF" "$BENCH_ROOT/bin/pr"
+# Build binary
+"$SCRIPT_DIR/build.sh" "$BEATS_REPO" "$REF" "$BENCH_ROOT/bin/bench"
 
 # Prepare config
 CONFIG="$BENCH_ROOT/pipelines/${SCENARIO}.yml"
@@ -49,18 +45,20 @@ cp "$CONFIG" "$TMPCONFIG"
 
 # Run benchmark via Python CLI
 cd "$BENCH_ROOT"
-uv run beats-bench run-scenario \
-  --base-binary "$BENCH_ROOT/bin/base/filebeat" \
-  --pr-binary "$BENCH_ROOT/bin/pr/filebeat" \
+uv run beats-bench run-benchmark \
+  --binary "$BENCH_ROOT/bin/bench/filebeat" \
   --config "$TMPCONFIG" \
   --mock-es "$BENCH_ROOT/bin/mock-es" \
   --cpus "$CPUS" \
   --measure "$MEASURE" \
   --runs "$RUNS" \
+  --scenario "$SCENARIO" \
   --output-dir "$BENCH_ROOT/results/${SCENARIO}-${CPUS}cpu"
 
 rm -f "$TMPCONFIG"
 
 echo ""
 echo "Results: $BENCH_ROOT/results/${SCENARIO}-${CPUS}cpu/"
-cat "$BENCH_ROOT/results/${SCENARIO}-${CPUS}cpu/results.txt"
+echo ""
+echo "Benchmark-action output:"
+cat "$BENCH_ROOT/results/${SCENARIO}-${CPUS}cpu/results.json"
