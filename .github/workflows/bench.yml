@@ -194,6 +194,17 @@ jobs:
           pattern: results-*
           path: all-results
 
+      - name: Resolve beats commit SHA
+        id: beats
+        run: |
+          REPO="${{ inputs.beats_repo || 'elastic/beats' }}"
+          REF="${{ inputs.ref || 'main' }}"
+          SHA=$(git ls-remote "https://github.com/${REPO}.git" "${REF}" | head -1 | cut -f1)
+          if [ -z "$SHA" ]; then SHA="$REF"; fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "ref=refs/heads/${REF}" >> "$GITHUB_OUTPUT"
+          echo "Beats ref: $REF ($SHA)"
+
       - name: Merge results into single file
         run: |
           python3 -c "
@@ -208,6 +219,9 @@ jobs:
 
       - name: Stash results to bench-data branch
         uses: strawgate/o11ykit/octo11y/actions/stash@main-dist
+        env:
+          GITHUB_SHA: ${{ steps.beats.outputs.sha }}
+          GITHUB_REF: ${{ steps.beats.outputs.ref }}
         with:
           results: bench-results.json
           format: benchmark-action

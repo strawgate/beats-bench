@@ -83,13 +83,23 @@ a:hover { text-decoration: underline; }
 
 .header-links {
   display: flex;
-  gap: 16px;
+  gap: 6px;
 }
 
 .header-links a {
   font-size: 13px;
   font-weight: 500;
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: all 0.15s;
+}
+
+.header-links a:hover {
   color: var(--base-color);
+  border-color: var(--base-color);
+  text-decoration: none;
 }
 
 /* ── Improve the hero section ── */
