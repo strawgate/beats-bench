@@ -1,0 +1,17 @@
+{
+  "runs": [
+    {
+      "id": "24523560674-1--publish",
+      "timestamp": "2026-04-16T17:14:46.197Z",
+      "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+      "ref": "refs/heads/main",
+      "benchmarks": 8,
+      "metrics": [
+        "value"
+      ]
+    }
+  ],
+  "metrics": [
+    "value"
+  ]
+}

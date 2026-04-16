@@ -1,0 +1,87 @@
+{
+  "metric": "value",
+  "unit": "events/s",
+  "direction": "bigger_is_better",
+  "series": {
+    "full-agent-dissect (1.0 CPU)": {
+      "points": [
+        {
+          "timestamp": "2026-04-16T17:14:46.197Z",
+          "value": 16371,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24523560674-1--publish"
+        }
+      ]
+    },
+    "full-agent-dissect (1.0 CPU) alloc_per_event": {
+      "points": [
+        {
+          "timestamp": "2026-04-16T17:14:46.197Z",
+          "value": 21724,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24523560674-1--publish"
+        }
+      ]
+    },
+    "full-agent-dissect (1.0 CPU) memory_rss": {
+      "points": [
+        {
+          "timestamp": "2026-04-16T17:14:46.197Z",
+          "value": 110.87,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24523560674-1--publish"
+        }
+      ]
+    },
+    "full-agent-dissect (1.0 CPU) memory_alloc": {
+      "points": [
+        {
+          "timestamp": "2026-04-16T17:14:46.197Z",
+          "value": 18.3,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24523560674-1--publish"
+        }
+      ]
+    },
+    "passthrough (1.0 CPU)": {
+      "points": [
+        {
+          "timestamp": "2026-04-16T17:14:46.197Z",
+          "value": 74781,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24523560674-1--publish"
+        }
+      ]
+    },
+    "passthrough (1.0 CPU) alloc_per_event": {
+      "points": [
+        {
+          "timestamp": "2026-04-16T17:14:46.197Z",
+          "value": 2893.5,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24523560674-1--publish"
+        }
+      ]
+    },
+    "passthrough (1.0 CPU) memory_rss": {
+      "points": [
+        {
+          "timestamp": "2026-04-16T17:14:46.197Z",
+          "value": 108.44,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24523560674-1--publish"
+        }
+      ]
+    },
+    "passthrough (1.0 CPU) memory_alloc": {
+      "points": [
+        {
+          "timestamp": "2026-04-16T17:14:46.197Z",
+          "value": 14.39,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24523560674-1--publish"
+        }
+      ]
+    }
+  }
+}
