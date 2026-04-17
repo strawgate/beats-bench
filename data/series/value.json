@@ -22,6 +22,12 @@
           "value": 15898,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "24523562129-1--publish"
+        },
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 15146,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
         }
       ]
     },
@@ -44,6 +50,12 @@
           "value": 20087.5,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "24523562129-1--publish"
+        },
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 23893,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
         }
       ]
     },
@@ -66,6 +78,12 @@
           "value": 114.11,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "24523562129-1--publish"
+        },
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 110.81,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
         }
       ]
     },
@@ -88,6 +106,12 @@
           "value": 16.59,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "24523562129-1--publish"
+        },
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 18.21,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
         }
       ]
     },
@@ -110,6 +134,12 @@
           "value": 71907.5,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "24523562129-1--publish"
+        },
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 77786,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
         }
       ]
     },
@@ -132,6 +162,12 @@
           "value": 2901,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "24523562129-1--publish"
+        },
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 2895,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
         }
       ]
     },
@@ -154,6 +190,12 @@
           "value": 108.48,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "24523562129-1--publish"
+        },
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 109.98,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
         }
       ]
     },
@@ -176,6 +218,252 @@
           "value": 16.12,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "24523562129-1--publish"
+        },
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 16.71,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "enrichment-only (0.5 CPU)": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 10200,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "enrichment-only (0.5 CPU) alloc_per_event": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 14630,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "enrichment-only (0.5 CPU) memory_rss": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 112.88,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "enrichment-only (0.5 CPU) memory_alloc": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 22.69,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "enrichment-only (1.0 CPU)": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 20324,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "enrichment-only (1.0 CPU) alloc_per_event": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 14581,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "enrichment-only (1.0 CPU) memory_rss": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 110.59,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "enrichment-only (1.0 CPU) memory_alloc": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 14.83,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-dissect (0.5 CPU)": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 7477,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-dissect (0.5 CPU) alloc_per_event": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 24054,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-dissect (0.5 CPU) memory_rss": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 111.82,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-dissect (0.5 CPU) memory_alloc": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 18.27,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-rename-only (0.5 CPU)": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 9212,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-rename-only (0.5 CPU) alloc_per_event": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 17317,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-rename-only (0.5 CPU) memory_rss": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 110.66,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-rename-only (0.5 CPU) memory_alloc": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 15.43,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-rename-only (1.0 CPU)": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 20096,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-rename-only (1.0 CPU) alloc_per_event": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 17327,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-rename-only (1.0 CPU) memory_rss": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 112.79,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "full-agent-rename-only (1.0 CPU) memory_alloc": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 18.02,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "passthrough (0.5 CPU)": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 36777,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "passthrough (0.5 CPU) alloc_per_event": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 2910,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "passthrough (0.5 CPU) memory_rss": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 107.78,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
+        }
+      ]
+    },
+    "passthrough (0.5 CPU) memory_alloc": {
+      "points": [
+        {
+          "timestamp": "2026-04-17T06:39:11.099Z",
+          "value": 12.81,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "24551388958-1--publish"
         }
       ]
     }
