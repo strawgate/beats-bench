@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
   "label": "value",
-  "message": "9.9k events/s",
-  "color": "red"
+  "message": "9.6k events/s",
+  "color": "blue"
 }
