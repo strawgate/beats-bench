@@ -1,0 +1,213 @@
+{
+  "run": {
+    "id": "26437610367-1--publish",
+    "timestamp": "2026-05-26T07:08:04.278Z",
+    "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+    "ref": "refs/heads/main",
+    "benchmarks": 32,
+    "metrics": [
+      "value"
+    ]
+  },
+  "metricSnapshots": [
+    {
+      "metric": "value",
+      "unit": "events/s",
+      "direction": "bigger_is_better",
+      "values": [
+        {
+          "name": "enrichment-only (0.5 CPU)",
+          "value": 9994,
+          "unit": "events/s",
+          "direction": "bigger_is_better"
+        },
+        {
+          "name": "enrichment-only (0.5 CPU) alloc_per_event",
+          "value": 14650,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "enrichment-only (0.5 CPU) memory_rss",
+          "value": 112.31,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "enrichment-only (0.5 CPU) memory_alloc",
+          "value": 19.33,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "enrichment-only (1.0 CPU)",
+          "value": 22182,
+          "unit": "events/s",
+          "direction": "bigger_is_better"
+        },
+        {
+          "name": "enrichment-only (1.0 CPU) alloc_per_event",
+          "value": 14532,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "enrichment-only (1.0 CPU) memory_rss",
+          "value": 109.61,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "enrichment-only (1.0 CPU) memory_alloc",
+          "value": 15.31,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-dissect (0.5 CPU)",
+          "value": 8155,
+          "unit": "events/s",
+          "direction": "bigger_is_better"
+        },
+        {
+          "name": "full-agent-dissect (0.5 CPU) alloc_per_event",
+          "value": 18023,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-dissect (0.5 CPU) memory_rss",
+          "value": 110.76,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-dissect (0.5 CPU) memory_alloc",
+          "value": 18.28,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-dissect (1.0 CPU)",
+          "value": 23205,
+          "unit": "events/s",
+          "direction": "bigger_is_better"
+        },
+        {
+          "name": "full-agent-dissect (1.0 CPU) alloc_per_event",
+          "value": 17829,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-dissect (1.0 CPU) memory_rss",
+          "value": 112.63,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-dissect (1.0 CPU) memory_alloc",
+          "value": 16.57,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-rename-only (0.5 CPU)",
+          "value": 10691,
+          "unit": "events/s",
+          "direction": "bigger_is_better"
+        },
+        {
+          "name": "full-agent-rename-only (0.5 CPU) alloc_per_event",
+          "value": 14972,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-rename-only (0.5 CPU) memory_rss",
+          "value": 111.88,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-rename-only (0.5 CPU) memory_alloc",
+          "value": 14.79,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-rename-only (1.0 CPU)",
+          "value": 20900,
+          "unit": "events/s",
+          "direction": "bigger_is_better"
+        },
+        {
+          "name": "full-agent-rename-only (1.0 CPU) alloc_per_event",
+          "value": 14969,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-rename-only (1.0 CPU) memory_rss",
+          "value": 112.7,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "full-agent-rename-only (1.0 CPU) memory_alloc",
+          "value": 17.61,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "passthrough (0.5 CPU)",
+          "value": 37010,
+          "unit": "events/s",
+          "direction": "bigger_is_better"
+        },
+        {
+          "name": "passthrough (0.5 CPU) alloc_per_event",
+          "value": 2899,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "passthrough (0.5 CPU) memory_rss",
+          "value": 108.85,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "passthrough (0.5 CPU) memory_alloc",
+          "value": 13.07,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "passthrough (1.0 CPU)",
+          "value": 75476,
+          "unit": "events/s",
+          "direction": "bigger_is_better"
+        },
+        {
+          "name": "passthrough (1.0 CPU) alloc_per_event",
+          "value": 2897,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "passthrough (1.0 CPU) memory_rss",
+          "value": 108.73,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        },
+        {
+          "name": "passthrough (1.0 CPU) memory_alloc",
+          "value": 16.01,
+          "unit": "events/s",
+          "direction": "smaller_is_better"
+        }
+      ]
+    }
+  ]
+}
