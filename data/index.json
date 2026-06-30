@@ -1,6 +1,16 @@
 {
   "runs": [
     {
+      "id": "28426882056-1--publish",
+      "timestamp": "2026-06-30T07:17:44.936Z",
+      "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+      "ref": "refs/heads/main",
+      "benchmarks": 32,
+      "metrics": [
+        "value"
+      ]
+    },
+    {
       "id": "28355944630-1--publish",
       "timestamp": "2026-06-29T07:38:45.927Z",
       "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
