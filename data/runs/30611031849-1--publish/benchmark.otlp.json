@@ -1,0 +1,1008 @@
+{
+  "resourceMetrics": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "benchkit.source_format",
+            "value": {
+              "stringValue": "benchmark-action"
+            }
+          },
+          {
+            "key": "benchkit.ref",
+            "value": {
+              "stringValue": "refs/heads/main"
+            }
+          },
+          {
+            "key": "benchkit.commit",
+            "value": {
+              "stringValue": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295"
+            }
+          },
+          {
+            "key": "benchkit.runner",
+            "value": {
+              "stringValue": "Linux/X64"
+            }
+          }
+        ]
+      },
+      "scopeMetrics": [
+        {
+          "metrics": [
+            {
+              "name": "value",
+              "unit": "events/s",
+              "gauge": {
+                "dataPoints": [
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "enrichment-only (0.5 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "enrichment-only (0.5 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "bigger_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "9861"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "enrichment-only (0.5 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "enrichment-only (0.5 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "14444"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "enrichment-only (0.5 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "enrichment-only (0.5 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 110.89
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "enrichment-only (0.5 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "enrichment-only (0.5 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 19.88
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "enrichment-only (1.0 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "enrichment-only (1.0 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "bigger_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "20007"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "enrichment-only (1.0 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "enrichment-only (1.0 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "14359"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "enrichment-only (1.0 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "enrichment-only (1.0 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 113.05
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "enrichment-only (1.0 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "enrichment-only (1.0 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 18.12
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-dissect (0.5 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-dissect (0.5 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "bigger_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "8287"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-dissect (0.5 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-dissect (0.5 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "17825"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-dissect (0.5 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-dissect (0.5 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 114.21
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-dissect (0.5 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-dissect (0.5 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 18.14
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-dissect (1.0 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-dissect (1.0 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "bigger_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "16530"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-dissect (1.0 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-dissect (1.0 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "17751"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-dissect (1.0 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-dissect (1.0 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 112.3
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-dissect (1.0 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-dissect (1.0 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 21.74
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (0.5 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (0.5 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "bigger_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "9663"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (0.5 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (0.5 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "14924"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (0.5 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (0.5 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 113.42
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (0.5 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (0.5 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 19.59
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (1.0 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (1.0 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "bigger_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "27353"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (1.0 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (1.0 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "14753"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (1.0 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (1.0 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 111.76
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (1.0 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "full-agent-rename-only (1.0 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 13.44
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "passthrough (0.5 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "passthrough (0.5 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "bigger_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "46902"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "passthrough (0.5 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "passthrough (0.5 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "2725"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "passthrough (0.5 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "passthrough (0.5 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 110.03
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "passthrough (0.5 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "passthrough (0.5 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 19.91
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "passthrough (1.0 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "passthrough (1.0 CPU)"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "bigger_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "78981"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "passthrough (1.0 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "passthrough (1.0 CPU) alloc_per_event"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asInt": "2723"
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "passthrough (1.0 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "passthrough (1.0 CPU) memory_rss"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 108.57
+                  },
+                  {
+                    "timeUnixNano": "1785481279077000000",
+                    "attributes": [
+                      {
+                        "key": "benchkit.scenario",
+                        "value": {
+                          "stringValue": "passthrough (1.0 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.series",
+                        "value": {
+                          "stringValue": "passthrough (1.0 CPU) memory_alloc"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.role",
+                        "value": {
+                          "stringValue": "outcome"
+                        }
+                      },
+                      {
+                        "key": "benchkit.metric.direction",
+                        "value": {
+                          "stringValue": "smaller_is_better"
+                        }
+                      }
+                    ],
+                    "asDouble": 15.85
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
