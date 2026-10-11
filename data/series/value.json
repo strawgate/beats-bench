@@ -1078,6 +1078,12 @@
           "value": 16031,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 19457,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -2156,6 +2162,12 @@
           "value": 17748,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 17710,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -3234,6 +3246,12 @@
           "value": 117.14,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 118.44,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -4312,6 +4330,12 @@
           "value": 22.31,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 18.7,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -5390,6 +5414,12 @@
           "value": 126442,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 127224,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -6468,6 +6498,12 @@
           "value": 2726,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 2729,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -7546,6 +7582,12 @@
           "value": 114.48,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 114.3,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -8624,6 +8666,12 @@
           "value": 15.03,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 18.29,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -9684,6 +9732,12 @@
           "value": 9977,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 10094,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -10744,6 +10798,12 @@
           "value": 14463,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 14422,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -11804,6 +11864,12 @@
           "value": 113.78,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 115.29,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -12864,6 +12930,12 @@
           "value": 17.27,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 21.86,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -13924,6 +13996,12 @@
           "value": 20245,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 21621,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -14984,6 +15062,12 @@
           "value": 14389,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 14341,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -16044,6 +16128,12 @@
           "value": 114.53,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 115.25,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -17104,6 +17194,12 @@
           "value": 13.79,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 17.15,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -18164,6 +18260,12 @@
           "value": 11323,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 7951,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -19224,6 +19326,12 @@
           "value": 17742,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 17836,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -20284,6 +20392,12 @@
           "value": 119.69,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 117.96,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -21344,6 +21458,12 @@
           "value": 22.12,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 20.3,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -22404,6 +22524,12 @@
           "value": 9617,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 14582,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -23464,6 +23590,12 @@
           "value": 14941,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 14835,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -24524,6 +24656,12 @@
           "value": 115.23,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 114.53,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -25584,6 +25722,12 @@
           "value": 19.69,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 15.16,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -26644,6 +26788,12 @@
           "value": 19267,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 19458,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -27704,6 +27854,12 @@
           "value": 14838,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 14814,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -28764,6 +28920,12 @@
           "value": 114.71,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 114.92,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -29824,6 +29986,12 @@
           "value": 18.2,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 22.41,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -30884,6 +31052,12 @@
           "value": 61629,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 47984,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -31944,6 +32118,12 @@
           "value": 2742,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 2740,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -33004,6 +33184,12 @@
           "value": 112.79,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 112.5,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     },
@@ -34064,6 +34250,12 @@
           "value": 17.39,
           "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
           "run_id": "38029605648-1--publish"
+        },
+        {
+          "timestamp": "2026-10-11T06:06:56.844Z",
+          "value": 13.44,
+          "commit": "373f9c8b8a3daf3c0d3bec70352c0fe099e6c295",
+          "run_id": "38116815034-1--publish"
         }
       ]
     }
